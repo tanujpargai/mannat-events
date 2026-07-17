@@ -28,8 +28,8 @@ export type StepDatesValues = z.infer<typeof StepDatesSchema>
 
 const MealSelectionSchema = z.object({
   type:             z.enum(['veg', 'non-veg']),
-  menu_item_ids:    z.array(z.string().uuid()).min(1, 'Please select at least one menu item'),
-  menu_item_names:  z.array(z.string()),
+  menu_item_ids:    z.array(z.string()).default([]),
+  menu_item_names:  z.array(z.string()).default([]),
   guest_count:      z.number().int().min(1, 'At least 1 guest required').max(10000),
 })
 
@@ -45,7 +45,7 @@ const DayPlanSchema = z.object({
 // ---- Function Assignment ----
 
 const FunctionAssignmentSchema = z.object({
-  function_id:   z.string().uuid(),
+  function_id:   z.string().optional().nullable(),
   function_name: z.string().min(1),
   day:           z.number().int().positive(),
 })
@@ -58,10 +58,10 @@ export const BookingSchema = z.object({
 
   day_plans: z.array(DayPlanSchema).min(1, 'Day plans are required'),
 
-  functions: z.array(FunctionAssignmentSchema),
+  functions: z.array(FunctionAssignmentSchema).default([]),
 
-  decoration_theme_id:    z.string().uuid('Please select a decoration theme'),
-  decoration_theme_title: z.string().min(1),
+  decoration_theme_id:    z.string().optional().nullable(),
+  decoration_theme_title: z.string().optional().nullable(),
 
   baraat_style: z.enum(['traditional', 'stylish', 'dj-on-wheels'], {
     errorMap: () => ({ message: 'Please select a baraat style' }),

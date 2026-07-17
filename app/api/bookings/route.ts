@@ -93,7 +93,7 @@ export async function POST(request: NextRequest) {
         duration,
         phone:                parsed.phone ?? null,
         baraat_style:         parsed.baraat_style,
-        decoration_theme_id:  parsed.decoration_theme_id,
+        decoration_theme_id:  parsed.decoration_theme_id && parsed.decoration_theme_id !== '' ? parsed.decoration_theme_id : null,
         day_plans:            parsed.day_plans,
         functions:            parsed.functions,
         is_flagged,
