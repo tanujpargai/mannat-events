@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/Button'
 import { Card3D } from '@/components/ui/Card3D'
 import { CalendarDays, ArrowRight } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
+import { motion } from 'framer-motion'
 
 interface StepDatesProps {
   data: Partial<BookingFormData>
