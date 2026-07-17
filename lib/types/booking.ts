@@ -154,3 +154,12 @@ export interface BlockedPhone {
   blocked_at: string
   blocked_by: string | null
 }
+
+export interface MealSummary {
+  vegLunch: number
+  nonVegLunch: number
+  vegDinner: number
+  nonVegDinner: number
+  totalLunch: number
+  totalDinner: number
+}

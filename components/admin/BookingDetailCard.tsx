@@ -7,7 +7,7 @@ import {
   BookingStatus,
   BOOKING_STATUS_LABELS,
 } from '@/lib/types'
-import { formatDate, getMealLabel } from '@/lib/utils/booking'
+import { formatDate, getBaraatLabel } from '@/lib/utils/booking'
 import { StatusBadge } from '@/components/admin/StatusBadge'
 import { MealSummary } from '@/components/admin/MealSummary'
 import { Button } from '@/components/ui/Button'
@@ -28,25 +28,27 @@ const STATUS_OPTIONS = (
   label: BOOKING_STATUS_LABELS[key],
 }))
 
-interface DetailRowProps {
+function DetailRow({
+  label,
+  value,
+  mono = false,
+}: {
   label: string
-  value: string | number
+  value?: string | number | null
   mono?: boolean
-}
-
-function DetailRow({ label, value, mono = false }: DetailRowProps) {
+}) {
   return (
-    <div className="flex justify-between items-center gap-6 py-3.5 border-b border-[#F0EDE9] last:border-0">
-      <span className="text-xs font-semibold uppercase tracking-wide text-[#A8A8A8]">
+    <div className="flex justify-between items-start gap-6 py-4 border-b border-[#F0EDE9] last:border-0">
+      <span className="text-xs font-semibold uppercase tracking-wider text-[#A8A8A8] shrink-0 pt-0.5">
         {label}
       </span>
       <span
         className={cn(
-          'text-sm font-medium text-[#1A1A1A] text-right',
-          mono && 'font-mono text-[11px] bg-[#F5F3F0] px-2 py-0.5 rounded text-[#737373]'
+          'text-sm font-semibold text-[#1A1A1A] text-right break-all',
+          mono && 'font-mono text-xs text-[#737373]'
         )}
       >
-        {value}
+        {value ?? '—'}
       </span>
     </div>
   )
@@ -54,62 +56,74 @@ function DetailRow({ label, value, mono = false }: DetailRowProps) {
 
 export function BookingDetailCard({ booking }: BookingDetailCardProps) {
   const router = useRouter()
-
   const [status, setStatus] = useState<BookingStatus>(booking.status)
   const [isSaving, setIsSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
   const [saveSuccess, setSaveSuccess] = useState(false)
 
   async function handleStatusUpdate() {
-    if (status === booking.status) return
-
     setIsSaving(true)
     setSaveError(null)
     setSaveSuccess(false)
 
-    const supabase = createClient()
+    try {
+      const supabase = createClient()
+      const { error } = await supabase
+        .from('bookings')
+        .update({ status })
+        .eq('id', booking.id)
 
-    const { error } = await supabase
-      .from('bookings')
-      .update({ status })
-      .eq('id', booking.id)
+      if (error) {
+        setSaveError(error.message)
+        return
+      }
 
-    if (error) {
-      setSaveError('Failed to update status. Please try again.')
+      setSaveSuccess(true)
+      router.refresh()
+    } catch {
+      setSaveError('An unexpected error occurred. Please try again.')
+    } finally {
       setIsSaving(false)
-      return
     }
-
-    setSaveSuccess(true)
-    setIsSaving(false)
-    router.refresh()
   }
+
+  const dayPlans  = booking.day_plans ?? []
+  const functions = booking.functions ?? []
 
   return (
     <div className="space-y-6">
-      {/* Booking Information */}
-      <Card className="p-0 overflow-hidden">
-        <div className="px-6 py-4 border-b border-[#F0EDE9] bg-[#FDFCFA]">
-          <p className="text-caption text-[#C9A84C]">Booking Information</p>
-        </div>
-        <div className="px-6 py-2">
-          <DetailRow label="Booking ID" value={booking.booking_id} mono />
-          <DetailRow label="Created" value={formatDate(booking.created_at)} />
-          <div className="flex justify-between items-center py-3.5">
-            <span className="text-xs font-semibold uppercase tracking-wide text-[#A8A8A8]">Status</span>
+      {/* Overview */}
+      <Card className="p-6 md:p-8">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <span className="text-xs font-bold text-[#A8A8A8] uppercase tracking-wider">
+              Reference ID
+            </span>
+            <h2 className="text-xl md:text-2xl font-serif font-semibold text-[#1A1A1A] mt-1">
+              {booking.booking_id}
+            </h2>
+            <p className="text-xs text-[#737373] mt-1">
+              Created on {new Date(booking.created_at).toLocaleDateString()}
+            </p>
+          </div>
+          <div className="sm:text-right">
+            <p className="text-xs font-bold text-[#A8A8A8] uppercase tracking-wider mb-1.5">
+              Status
+            </p>
             <StatusBadge status={booking.status} />
           </div>
         </div>
       </Card>
 
-      {/* Guest Information */}
+      {/* Customer Information */}
       <Card className="p-0 overflow-hidden">
         <div className="px-6 py-4 border-b border-[#F0EDE9] bg-[#FDFCFA]">
-          <p className="text-caption text-[#C9A84C]">Guest</p>
+          <p className="text-caption text-[#C9A84C]">Customer Details</p>
         </div>
         <div className="px-6 py-2">
           <DetailRow label="User ID" value={booking.user_id} mono />
-          <DetailRow label="Guests" value={booking.guests} />
+          <DetailRow label="Email Address" value={booking.customer_email} />
+          <DetailRow label="Phone Number" value={booking.phone} />
         </div>
       </Card>
 
@@ -125,72 +139,98 @@ export function BookingDetailCard({ booking }: BookingDetailCardProps) {
             label="Duration"
             value={`${booking.duration} ${booking.duration === 1 ? 'night' : 'nights'}`}
           />
-          {/* Use optional chaining to handle potentially undefined fields */}
-          <DetailRow label="Room Category" value={(booking as any).room_category ?? 'Not selected'} />
         </div>
       </Card>
 
-      {/* Event Details */}
+      {/* Event Style */}
       <Card className="p-0 overflow-hidden">
         <div className="px-6 py-4 border-b border-[#F0EDE9] bg-[#FDFCFA]">
-          <p className="text-caption text-[#C9A84C]">Event Details</p>
+          <p className="text-caption text-[#C9A84C]">Event Style</p>
         </div>
         <div className="px-6 py-2">
-          <DetailRow label="Event Type" value={(booking as any).event_type ?? 'Not selected'} />
-          <DetailRow label="Decoration Theme" value={(booking as any).decoration_theme ?? 'Not selected'} />
-          <DetailRow label="Theme Colour" value={(booking as any).theme_colour ?? 'Not selected'} />
+          <DetailRow label="Decoration Theme ID" value={booking.decoration_theme_id} mono />
+          <DetailRow label="Baraat Style" value={booking.baraat_style ? getBaraatLabel(booking.baraat_style) : 'None selected'} />
         </div>
       </Card>
 
-      {/* Additional Services */}
-      <Card className="p-0 overflow-hidden">
-        <div className="px-6 py-4 border-b border-[#F0EDE9] bg-[#FDFCFA]">
-          <p className="text-caption text-[#C9A84C]">Additional Services</p>
-        </div>
-        <div className="px-6 py-2">
-          <DetailRow
-            label="Entertainment"
-            value={(booking as any).entertainment?.length ? (booking as any).entertainment.join(', ') : 'None selected'}
-          />
-          <DetailRow label="Photography" value={(booking as any).photography ?? 'Not selected'} />
-          <DetailRow label="Transportation" value={(booking as any).transportation ?? 'Not selected'} />
-          <DetailRow
-            label="Special Requests"
-            value={(booking as any).special_requests?.trim() ? (booking as any).special_requests : 'None'}
-          />
-        </div>
-      </Card>
+      {/* Wedding Functions */}
+      {functions.length > 0 && (
+        <Card className="p-0 overflow-hidden">
+          <div className="px-6 py-4 border-b border-[#F0EDE9] bg-[#FDFCFA]">
+            <p className="text-caption text-[#C9A84C]">Wedding Functions</p>
+          </div>
+          <div className="px-6 py-4 flex flex-wrap gap-2">
+            {functions.map((fn) => (
+              <span
+                key={fn.function_id}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#F5EDD6] border border-[#E8D9A8] text-xs font-medium text-[#1A1A1A]"
+              >
+                {fn.function_name}
+                <span className="text-[#A08040]">→ Day {fn.day}</span>
+              </span>
+            ))}
+          </div>
+        </Card>
+      )}
 
       {/* Daily Meal Plan */}
-      <Card className="p-0 overflow-hidden">
-        <div className="px-6 py-4 border-b border-[#F0EDE9] bg-[#FDFCFA]">
-          <p className="text-caption text-[#C9A84C]">Daily Meal Plan</p>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="luxury-table">
-            <thead>
-              <tr>
-                <th>Day</th>
-                <th>Breakfast</th>
-                <th>Lunch</th>
-                <th>Dinner</th>
-              </tr>
-            </thead>
-            <tbody>
-              {booking.meals.map((meal) => (
-                <tr key={meal.day}>
-                  <td className="font-medium">Day {meal.day}</td>
-                  <td className="text-[#A8A8A8] italic">Included</td>
-                  <td>{getMealLabel(meal.lunch)}</td>
-                  <td>{getMealLabel(meal.dinner)}</td>
+      {dayPlans.length > 0 && (
+        <Card className="p-0 overflow-hidden">
+          <div className="px-6 py-4 border-b border-[#F0EDE9] bg-[#FDFCFA]">
+            <p className="text-caption text-[#C9A84C]">Daily Meal Plan & Rooms</p>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="luxury-table">
+              <thead>
+                <tr>
+                  <th>Day</th>
+                  <th>Rooms</th>
+                  <th>Breakfast</th>
+                  <th>Lunch</th>
+                  <th>Dinner</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </Card>
+              </thead>
+              <tbody>
+                {dayPlans.map((plan) => (
+                  <tr key={plan.day}>
+                    <td className="font-medium">Day {plan.day}</td>
+                    <td>{plan.rooms ?? 1}</td>
+                    <td className="text-[#A8A8A8] italic">Included</td>
+                    <td>
+                      <span className="block text-sm font-semibold capitalize">
+                        {plan.lunch?.type === 'veg' ? '🌿 Veg' : '🍗 Non-Veg'}
+                      </span>
+                      <span className="block text-xs text-[#737373]">
+                        {plan.lunch?.guest_count ?? 0} guests
+                      </span>
+                      {(plan.lunch?.menu_item_names?.length ?? 0) > 0 && (
+                        <span className="block text-xs text-[#A8A8A8] max-w-[150px] truncate" title={plan.lunch.menu_item_names.join(', ')}>
+                          {plan.lunch.menu_item_names.join(', ')}
+                        </span>
+                      )}
+                    </td>
+                    <td>
+                      <span className="block text-sm font-semibold capitalize">
+                        {plan.dinner?.type === 'veg' ? '🌿 Veg' : '🍗 Non-Veg'}
+                      </span>
+                      <span className="block text-xs text-[#737373]">
+                        {plan.dinner?.guest_count ?? 0} guests
+                      </span>
+                      {(plan.dinner?.menu_item_names?.length ?? 0) > 0 && (
+                        <span className="block text-xs text-[#A8A8A8] max-w-[150px] truncate" title={plan.dinner.menu_item_names.join(', ')}>
+                          {plan.dinner.menu_item_names.join(', ')}
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+      )}
 
-      <MealSummary meals={booking.meals} />
+      {dayPlans.length > 0 && <MealSummary meals={dayPlans} />}
 
       {/* Status Update */}
       <Card className="p-0 overflow-hidden">

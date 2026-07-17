@@ -1,9 +1,9 @@
-import { DayMeal } from '@/lib/types'
+import { DayPlan } from '@/lib/types'
 import { calculateMealSummary } from '@/lib/utils/meals'
 import { Card } from '@/components/ui/Card'
 
 interface MealSummaryProps {
-  meals: DayMeal[]
+  meals: DayPlan[]
 }
 
 interface SummaryRowProps {
