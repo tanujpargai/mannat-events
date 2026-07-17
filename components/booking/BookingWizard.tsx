@@ -589,7 +589,45 @@ export function BookingWizard() {
   }
 
   return (
-    <div className="min-h-screen bg-[#FBF9F6]">
+    <div
+      className="min-h-screen relative overflow-hidden"
+      style={{
+        background: 'radial-gradient(circle at 10% 20%, #FAF8F5 0%, #F5EDD6 100%)',
+      }}
+    >
+      {/* Immersive background decoration */}
+      <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">
+        {/* Soft gold glow */}
+        <div
+          className="absolute w-[600px] h-[600px] rounded-full top-[10%] left-[5%] opacity-30 animate-pulse-gold"
+          style={{ background: 'radial-gradient(circle, rgba(201,168,76,0.06) 0%, transparent 75%)' }}
+        />
+        <div
+          className="absolute w-[500px] h-[500px] rounded-full bottom-[10%] right-[5%] opacity-30 animate-pulse-gold"
+          style={{ background: 'radial-gradient(circle, rgba(201,168,76,0.05) 0%, transparent 75%)' }}
+        />
+
+        {/* Floating rotating mandala */}
+        <div className="absolute -bottom-24 -left-24 w-80 h-80 animate-spin-slow opacity-[0.03]">
+          <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="50" cy="50" r="48" stroke="#C9A84C" strokeWidth="0.5"/>
+            <circle cx="50" cy="50" r="36" stroke="#C9A84C" strokeWidth="0.5"/>
+            {[0,45,90,135,180,225,270,315].map(a => (
+              <line key={a} x1="50" y1="2" x2="50" y2="98" stroke="#C9A84C" strokeWidth="0.3"
+                style={{ transformOrigin: '50px 50px', transform: `rotate(${a}deg)` }} />
+            ))}
+            <polygon points="50,10 55,45 90,50 55,55 50,90 45,55 10,50 45,45" stroke="#C9A84C" strokeWidth="0.5" fill="none"/>
+          </svg>
+        </div>
+
+        <div className="absolute -top-20 -right-20 w-72 h-72 animate-spin-slow opacity-[0.02]" style={{ animationDirection: 'reverse' }}>
+          <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="50" cy="50" r="48" stroke="#C9A84C" strokeWidth="0.5"/>
+            <polygon points="50,10 55,45 90,50 55,55 50,90 45,55 10,50 45,45" stroke="#C9A84C" strokeWidth="0.5" fill="none"/>
+          </svg>
+        </div>
+      </div>
+
       {/* 3D Progress Bar */}
       <DynamicProgressBar
         currentIndex={stepIndex}
@@ -597,7 +635,7 @@ export function BookingWizard() {
         currentLabel={stepLabel(currentStep)}
       />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-16">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-16 relative z-10">
         <div className="flex gap-10 items-start">
           {/* Main form area */}
           <main className="flex-1 min-w-0">
