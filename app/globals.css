@@ -1,0 +1,416 @@
+/* ============================================================
+   TAILWIND v4 ENTRY POINT
+   ============================================================ */
+@import "tailwindcss";
+
+/* ============================================================
+   GOOGLE FONTS
+   ============================================================ */
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600&family=Inter:wght@300;400;500;600;700&display=swap');
+
+/* ============================================================
+   TAILWIND v4 THEME — custom design tokens exposed as
+   Tailwind utility classes (bg-brand-gold, text-brand-cream…)
+   ============================================================ */
+@theme {
+  /* Brand palette */
+  --color-brand-gold:    #C9A84C;
+  --color-brand-cream:   #FAF3E8;
+  --color-brand-obsidian:#0A0807;
+  --color-brand-stone:   #9A8E80;
+
+  /* Extended palette */
+  --color-obsidian:      #0A0807;
+  --color-obsidian-2:    #120F0B;
+  --color-obsidian-3:    #1C1712;
+  --color-gold:          #C9A84C;
+  --color-gold-light:    #E8C97A;
+  --color-gold-dark:     #9A7B2E;
+  --color-cream:         #FAF3E8;
+  --color-cream-2:       #F3E9D8;
+
+  /* border-brand-border utility */
+  --color-brand-border:  rgba(201,168,76,0.12);
+
+  /* Custom animations (animate-* utilities) */
+  --animate-marquee:       marquee 30s linear infinite;
+  --animate-float-slow:    float-slow 7s ease-in-out infinite;
+  --animate-float-medium:  float-medium 5s ease-in-out infinite;
+  --animate-spin-slow:     spin-slow 20s linear infinite;
+  --animate-pulse-gold:    pulse-gold 3s ease-in-out infinite;
+  --animate-fade-up:       fade-up 0.5s cubic-bezier(0.16,1,0.3,1) both;
+  --animate-shimmer:       shimmer-gold 2.4s ease-in-out infinite;
+
+  /* shadow-hover utility */
+  --shadow-hover: 0 20px 60px rgba(10,8,7,0.18), 0 4px 16px rgba(201,168,76,0.12);
+}
+
+/* ============================================================
+   KEYFRAMES
+   ============================================================ */
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+@keyframes float-slow {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  33%       { transform: translateY(-18px) rotate(1.5deg); }
+  66%       { transform: translateY(-8px) rotate(-1deg); }
+}
+
+@keyframes float-medium {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50%       { transform: translateY(-24px) rotate(-2deg); }
+}
+
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+@keyframes pulse-gold {
+  0%, 100% { opacity: 0.4; transform: scale(1); }
+  50%       { opacity: 0.7; transform: scale(1.08); }
+}
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes gold-shimmer-text {
+  0%   { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
+
+@keyframes shimmer-gold {
+  0%   { background-position: -200% center; }
+  100% { background-position:  200% center; }
+}
+
+@keyframes digit-roll-up {
+  from { transform: translateY(100%);  opacity: 0; }
+  to   { transform: translateY(0);     opacity: 1; }
+}
+
+@keyframes digit-roll-down {
+  from { transform: translateY(-100%); opacity: 0; }
+  to   { transform: translateY(0);     opacity: 1; }
+}
+
+/* ============================================================
+   CSS CUSTOM PROPERTIES (for inline-style use)
+   ============================================================ */
+:root {
+  --obsidian:      #0A0807;
+  --obsidian-2:    #120F0B;
+  --obsidian-3:    #1C1712;
+  --obsidian-4:    #252016;
+
+  --gold:          #C9A84C;
+  --gold-light:    #E8C97A;
+  --gold-dark:     #9A7B2E;
+  --gold-muted:    rgba(201,168,76,0.15);
+
+  --cream:         #FAF3E8;
+  --cream-2:       #F3E9D8;
+  --blush:         #E8B4A0;
+  --sage:          #8B9E87;
+
+  --text-primary:  #FAF3E8;
+  --text-muted:    #9A8E80;
+  --text-dim:      #5C5248;
+
+  --border:        rgba(201,168,76,0.12);
+  --border-light:  rgba(201,168,76,0.25);
+
+  /* Legacy compat vars */
+  --brand-gold:    #C9A84C;
+  --brand-cream:   #FAF3E8;
+  --brand-obsidian:#0A0807;
+  --brand-stone:   #9A8E80;
+  --brand-border:  rgba(201,168,76,0.12);
+  --brand-cream-dark: #F3E9D8;
+}
+
+/* ============================================================
+   BASE
+   ============================================================ */
+html {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 16px;
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  background: var(--obsidian);
+  color: var(--cream);
+  overflow-x: hidden;
+  min-height: 100vh;
+}
+
+/* ============================================================
+   TYPOGRAPHY UTILITIES
+   ============================================================ */
+.font-serif { font-family: 'Cormorant Garamond', Georgia, serif; }
+.font-sans  { font-family: 'Inter', system-ui, sans-serif; }
+
+.text-display {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: clamp(3rem, 8vw, 7rem);
+  font-weight: 300;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  color: var(--cream);
+}
+
+.text-headline {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: clamp(2rem, 4vw, 3.5rem);
+  font-weight: 400;
+  line-height: 1.15;
+  color: var(--cream);
+}
+
+.text-subheadline {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: clamp(1.4rem, 2.5vw, 2rem);
+  font-weight: 300;
+  font-style: italic;
+  line-height: 1.4;
+  color: var(--text-muted);
+}
+
+.text-body-lg {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 1.0625rem;
+  font-weight: 300;
+  line-height: 1.8;
+  color: var(--text-muted);
+}
+
+.text-body {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 0.9375rem;
+  font-weight: 400;
+  line-height: 1.7;
+  color: var(--text-muted);
+}
+
+.text-caption {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
+/* ============================================================
+   GOLD GRADIENT TEXT
+   ============================================================ */
+.gold-text {
+  background: linear-gradient(135deg, var(--gold-dark) 0%, var(--gold) 40%, var(--gold-light) 60%, var(--gold) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-size: 200% auto;
+}
+
+.gold-text-animate {
+  background: linear-gradient(135deg, var(--gold-dark) 0%, var(--gold) 40%, var(--gold-light) 60%, var(--gold) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-size: 200% auto;
+  animation: gold-shimmer-text 4s linear infinite;
+}
+
+/* ============================================================
+   GLASSMORPHISM
+   ============================================================ */
+.glass {
+  background: rgba(255,255,255,0.04);
+  backdrop-filter: blur(24px) saturate(1.4);
+  -webkit-backdrop-filter: blur(24px) saturate(1.4);
+  border: 1px solid rgba(201,168,76,0.12);
+}
+
+.glass-gold {
+  background: rgba(201,168,76,0.06);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(201,168,76,0.2);
+}
+
+.glass-light {
+  background: rgba(250,243,232,0.92);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(201,168,76,0.15);
+}
+
+/* ============================================================
+   3D / SHADOW UTILITIES
+   ============================================================ */
+.perspective-container {
+  perspective: 1200px;
+  perspective-origin: 50% 50%;
+}
+
+.float-z    { transform: translateZ(20px); transform-style: preserve-3d; }
+.float-z-sm { transform: translateZ(10px); transform-style: preserve-3d; }
+
+.shadow-3d {
+  box-shadow:
+    0 1px  2px  rgba(10,8,7,0.08),
+    0 4px  12px rgba(10,8,7,0.12),
+    0 12px 32px rgba(10,8,7,0.10),
+    0 2px  8px  rgba(201,168,76,0.06);
+}
+
+.shadow-3d-hover {
+  box-shadow:
+    0 2px  4px  rgba(10,8,7,0.10),
+    0 8px  24px rgba(10,8,7,0.15),
+    0 24px 60px rgba(10,8,7,0.12),
+    0 4px  16px rgba(201,168,76,0.12);
+}
+
+.shadow-3d-selected {
+  box-shadow:
+    0 0 0 1px  rgba(201,168,76,0.5),
+    0 0 0 4px  rgba(201,168,76,0.12),
+    0 8px 32px rgba(201,168,76,0.2),
+    0 24px 64px rgba(10,8,7,0.15);
+}
+
+/* ============================================================
+   SHIMMER / GLOW
+   ============================================================ */
+.shimmer-gold {
+  background: linear-gradient(105deg, transparent 35%, rgba(201,168,76,0.35) 50%, transparent 65%);
+  background-size: 200% 100%;
+  animation: shimmer-gold 2.4s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.ring-gold-glow {
+  box-shadow: 0 0 0 2px #C9A84C, 0 0 16px rgba(201,168,76,0.3), 0 0 40px rgba(201,168,76,0.15);
+}
+
+/* ============================================================
+   BOOKING WIZARD GLASS PANELS
+   ============================================================ */
+.glass-panel {
+  background: rgba(255,255,255,0.72);
+  backdrop-filter: blur(20px) saturate(1.6);
+  -webkit-backdrop-filter: blur(20px) saturate(1.6);
+  border: 1px solid rgba(201,168,76,0.14);
+}
+
+.glass-panel-dark {
+  background: rgba(10,8,7,0.75);
+  backdrop-filter: blur(20px) saturate(1.4);
+  -webkit-backdrop-filter: blur(20px) saturate(1.4);
+  border: 1px solid rgba(255,255,255,0.08);
+}
+
+/* ============================================================
+   BOOKING WIZARD STEP ANIMATIONS
+   ============================================================ */
+.digit-roll-up   { animation: digit-roll-up   0.2s cubic-bezier(0.16,1,0.3,1) both; }
+.digit-roll-down { animation: digit-roll-down 0.2s cubic-bezier(0.16,1,0.3,1) both; }
+
+/* ============================================================
+   PROGRESS BAR
+   ============================================================ */
+.progress-track {
+  background: linear-gradient(to right, rgba(201,168,76,0.08), rgba(201,168,76,0.05));
+  border: 1px solid rgba(201,168,76,0.10);
+  box-shadow: inset 0 1px 3px rgba(10,8,7,0.05);
+}
+
+.progress-fill {
+  background: linear-gradient(90deg, #9A7B2E 0%, #C9A84C 50%, #E8C97A 100%);
+  box-shadow: 0 2px 8px rgba(201,168,76,0.4), 0 0 20px rgba(201,168,76,0.15);
+  transition: width 0.5s cubic-bezier(0.16,1,0.3,1);
+}
+
+.progress-dot {
+  background: radial-gradient(circle at 35% 35%, #E8C97A, #9A7B2E);
+  box-shadow: 0 2px 6px rgba(201,168,76,0.5), 0 0 12px rgba(201,168,76,0.3), inset 0 1px 1px rgba(255,255,255,0.4);
+}
+
+/* ============================================================
+   MEAL TYPE CARDS
+   ============================================================ */
+.meal-card-veg            { background: linear-gradient(135deg, #F0FDF4 0%, #DCFCE7 100%); border-color: rgba(22,163,74,0.2); }
+.meal-card-veg-selected   { background: linear-gradient(135deg, #DCFCE7 0%, #BBF7D0 100%); border-color: #16A34A; }
+.meal-card-nonveg         { background: linear-gradient(135deg, #FFF1F2 0%, #FFE4E6 100%); border-color: rgba(185,28,28,0.2); }
+.meal-card-nonveg-selected{ background: linear-gradient(135deg, #FFE4E6 0%, #FECDD3 100%); border-color: #B91C1C; }
+
+/* ============================================================
+   LEGACY UI (luxury-card used in old pages, booking wizard)
+   ============================================================ */
+.luxury-card {
+  background: rgba(250,243,232,0.95);
+  border: 1px solid rgba(201,168,76,0.15);
+}
+
+.luxury-card-glow {
+  box-shadow: 0 0 60px rgba(201,168,76,0.06), 0 1px 3px rgba(10,8,7,0.06);
+}
+
+.luxury-noise {
+  opacity: 0.018;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 180px 180px;
+}
+
+/* ============================================================
+   LUXURY TABLE (admin panel, dashboard)
+   ============================================================ */
+.luxury-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.luxury-table th {
+  padding: 12px 20px;
+  text-align: left;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  border-bottom: 1px solid rgba(201,168,76,0.1);
+  background: rgba(250,243,232,0.02);
+}
+
+.luxury-table td {
+  padding: 14px 20px;
+  border-bottom: 1px solid rgba(201,168,76,0.06);
+  color: #1A1A1A;
+}
+
+.luxury-table tbody tr:hover { background: rgba(201,168,76,0.02); }
+.luxury-table tbody tr:last-child td { border-bottom: none; }
+
+/* ============================================================
+   SCROLLBAR
+   ============================================================ */
+::-webkit-scrollbar       { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--obsidian-2); }
+::-webkit-scrollbar-thumb { background: var(--gold-dark); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--gold); }
+
+/* ============================================================
+   SELECTION
+   ============================================================ */
+::selection { background: rgba(201,168,76,0.25); color: var(--cream); }

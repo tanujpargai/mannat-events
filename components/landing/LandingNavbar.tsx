@@ -1,0 +1,164 @@
+'use client'
+
+import { useState, useEffect } from 'react'
+import Link from 'next/link'
+import { motion, AnimatePresence } from 'framer-motion'
+
+interface Props { isLoggedIn: boolean }
+
+export function LandingNavbar({ isLoggedIn }: Props) {
+  const [scrolled, setScrolled] = useState(false)
+  const [mobileOpen, setMobileOpen] = useState(false)
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 40)
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
+
+  return (
+    <>
+      <header
+        className="fixed top-0 left-0 right-0 z-50 transition-all duration-500"
+        style={{
+          background: scrolled ? 'rgba(10,8,7,0.92)' : 'transparent',
+          backdropFilter: scrolled ? 'blur(20px)' : 'none',
+          borderBottom: scrolled ? '1px solid rgba(201,168,76,0.1)' : '1px solid transparent',
+        }}
+      >
+        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+          {/* Logo */}
+          <Link href="/" className="flex items-center gap-3 group">
+            <div
+              className="w-9 h-9 rounded-lg flex items-center justify-center text-sm font-bold transition-transform duration-300 group-hover:rotate-3"
+              style={{ background: 'linear-gradient(135deg, #9A7B2E, #C9A84C)', color: '#0A0807' }}
+            >
+              M
+            </div>
+            <span className="font-semibold text-sm tracking-[0.22em] uppercase" style={{ color: '#FAF3E8' }}>
+              Mannat Events
+            </span>
+          </Link>
+
+          {/* Desktop nav */}
+          <nav className="hidden md:flex items-center gap-8">
+            {[
+              { label: 'Offerings', href: '#offerings' },
+              { label: 'Gallery', href: '#gallery' },
+              { label: 'Process', href: '#process' },
+            ].map((item) => (
+              <a
+                key={item.href}
+                href={item.href}
+                className="text-sm font-medium transition-colors duration-200"
+                style={{ color: 'rgba(250,243,232,0.6)' }}
+                onMouseEnter={(e) => (e.currentTarget.style.color = '#C9A84C')}
+                onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(250,243,232,0.6)')}
+              >
+                {item.label}
+              </a>
+            ))}
+          </nav>
+
+          {/* CTA */}
+          <div className="hidden md:flex items-center gap-4">
+            {isLoggedIn ? (
+              <Link href="/dashboard">
+                <button
+                  className="rounded-full px-6 py-2.5 text-sm font-semibold tracking-wider transition-all duration-300"
+                  style={{
+                    background: 'linear-gradient(135deg, #9A7B2E, #C9A84C)',
+                    color: '#0A0807',
+                  }}
+                >
+                  My Dashboard
+                </button>
+              </Link>
+            ) : (
+              <>
+                <Link
+                  href="/login"
+                  className="text-sm font-medium transition-colors"
+                  style={{ color: 'rgba(250,243,232,0.6)' }}
+                  onMouseEnter={(e) => (e.currentTarget.style.color = '#FAF3E8')}
+                  onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(250,243,232,0.6)')}
+                >
+                  Sign In
+                </Link>
+                <Link href="/signup">
+                  <button
+                    className="rounded-full px-6 py-2.5 text-sm font-semibold tracking-wider transition-all duration-300 hover:opacity-90"
+                    style={{
+                      background: 'linear-gradient(135deg, #9A7B2E, #C9A84C)',
+                      color: '#0A0807',
+                      boxShadow: '0 4px 20px rgba(201,168,76,0.3)',
+                    }}
+                  >
+                    Start Planning
+                  </button>
+                </Link>
+              </>
+            )}
+          </div>
+
+          {/* Mobile menu button */}
+          <button
+            className="md:hidden flex flex-col gap-1.5 p-2"
+            onClick={() => setMobileOpen(!mobileOpen)}
+          >
+            <span className="block w-6 h-px transition-all duration-300" style={{ background: '#C9A84C', transform: mobileOpen ? 'translateY(5px) rotate(45deg)' : 'none' }} />
+            <span className="block w-4 h-px transition-all duration-300" style={{ background: '#C9A84C', opacity: mobileOpen ? 0 : 1 }} />
+            <span className="block w-6 h-px transition-all duration-300" style={{ background: '#C9A84C', transform: mobileOpen ? 'translateY(-5px) rotate(-45deg)' : 'none' }} />
+          </button>
+        </div>
+      </header>
+
+      {/* Mobile drawer */}
+      <AnimatePresence>
+        {mobileOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="fixed inset-0 z-40 flex flex-col md:hidden"
+            style={{ background: 'rgba(10,8,7,0.97)', paddingTop: '80px' }}
+          >
+            <nav className="flex flex-col items-center gap-8 py-12">
+              {[
+                { label: 'Offerings', href: '#offerings' },
+                { label: 'Gallery', href: '#gallery' },
+                { label: 'Process', href: '#process' },
+              ].map((item) => (
+                <a
+                  key={item.href}
+                  href={item.href}
+                  className="font-serif text-3xl font-light"
+                  style={{ color: '#FAF3E8' }}
+                  onClick={() => setMobileOpen(false)}
+                >
+                  {item.label}
+                </a>
+              ))}
+              <div className="flex flex-col gap-4 mt-4 w-full px-8">
+                <Link href={isLoggedIn ? '/dashboard' : '/signup'} onClick={() => setMobileOpen(false)}>
+                  <button className="w-full rounded-full py-4 font-semibold tracking-wider"
+                    style={{ background: 'linear-gradient(135deg, #9A7B2E, #C9A84C)', color: '#0A0807' }}>
+                    {isLoggedIn ? 'My Dashboard' : 'Start Planning'}
+                  </button>
+                </Link>
+                {!isLoggedIn && (
+                  <Link href="/login" onClick={() => setMobileOpen(false)}>
+                    <button className="w-full rounded-full py-4 font-medium text-sm tracking-wider"
+                      style={{ border: '1px solid rgba(201,168,76,0.3)', color: '#FAF3E8' }}>
+                      Sign In
+                    </button>
+                  </Link>
+                )}
+              </div>
+            </nav>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
+  )
+}
