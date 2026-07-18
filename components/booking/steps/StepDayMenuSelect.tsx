@@ -18,31 +18,94 @@ interface Props {
   onPrev: () => void
 }
 
+// Derive a short category label from a dish name.
+// Rules (in order):
+//   1. Extract the FIRST meaningful word that isn't a generic cooking verb/adjective.
+//   2. If no keyword matches, use the first word of the name.
+const STOP_WORDS = new Set([
+  'stuffed', 'spiced', 'slow', 'fresh', 'fried', 'roasted', 'tandoor', 'tandoori',
+  'grilled', 'baked', 'creamy', 'royal', 'shahi', 'aromatic', 'plump', 'tender',
+  'cooked', 'minced', 'velvety', 'fragrant', 'saffron', 'layered', 'coastal',
+  'braised', 'kashmiri', 'whole', 'spiced',
+])
+
+function getCategory(name: string): string {
+  const words = name.split(/\s+/)
+  // Return the first word that isn't a stop-word, title-cased
+  for (const word of words) {
+    const lower = word.toLowerCase().replace(/[^a-z]/g, '')
+    if (lower.length > 2 && !STOP_WORDS.has(lower)) {
+      return word.charAt(0).toUpperCase() + word.slice(1)
+    }
+  }
+  return words[0]
+}
+
+interface CategoryGroup {
+  category: string
+  items: MenuItem[]
+}
+
+function groupByCategory(items: MenuItem[]): CategoryGroup[] {
+  const map = new Map<string, MenuItem[]>()
+  for (const item of items) {
+    const cat = getCategory(item.name)
+    if (!map.has(cat)) map.set(cat, [])
+    map.get(cat)!.push(item)
+  }
+  // Sort categories alphabetically
+  const groups: CategoryGroup[] = []
+  for (const [category, catItems] of map.entries()) {
+    groups.push({ category, items: catItems })
+  }
+  groups.sort((a, b) => a.category.localeCompare(b.category))
+  return groups
+}
+
 export function StepDayMenuSelect({
   day, meal, mealType, menuItems, selectedIds, onNext, onPrev,
 }: Props) {
-  const [selected, setSelected] = useState<Set<string>>(new Set(selectedIds))
-  const [error, setError]       = useState('')
+  // Track SELECTED CATEGORIES (not individual dish ids)
+  const groups = groupByCategory(menuItems)
+
+  // Pre-select categories from existing selectedIds
+  const initialSelected = new Set<string>(
+    groups
+      .filter(g => g.items.some(i => selectedIds.includes(i.id)))
+      .map(g => g.category)
+  )
+
+  const [selectedCats, setSelectedCats] = useState<Set<string>>(initialSelected)
+  const [error, setError] = useState('')
 
   const mealLabel = meal === 'lunch' ? 'Lunch' : 'Dinner'
-  const typeLabel = mealType === 'veg' ? '🌿 Vegetarian' : '🍗 Non-Vegetarian'
+  const typeLabel  = mealType === 'veg' ? '🌿 Vegetarian' : '🍗 Non-Vegetarian'
 
-  function toggle(id: string) {
+  function toggleCat(cat: string) {
     setError('')
-    setSelected((prev) => {
+    setSelectedCats((prev) => {
       const next = new Set(prev)
-      next.has(id) ? next.delete(id) : next.add(id)
+      next.has(cat) ? next.delete(cat) : next.add(cat)
       return next
     })
   }
 
   function handleNext() {
-    if (selected.size === 0 && menuItems.length > 0) {
-      setError('Please select at least one dish to continue.')
+    if (selectedCats.size === 0 && menuItems.length > 0) {
+      setError('Please select at least one category to continue.')
       return
     }
-    const ids   = Array.from(selected)
-    const names = ids.map((id) => menuItems.find((m) => m.id === id)?.name ?? '')
+    // Expand selected categories back to all their item ids/names
+    const ids: string[] = []
+    const names: string[] = []
+    for (const group of groups) {
+      if (selectedCats.has(group.category)) {
+        for (const item of group.items) {
+          ids.push(item.id)
+          names.push(item.name)
+        }
+      }
+    }
     onNext(ids, names)
   }
 
@@ -66,13 +129,13 @@ export function StepDayMenuSelect({
       </div>
 
       <h2 className="text-headline mb-3">
-        Choose your {mealLabel.toLowerCase()} dishes
+        Choose your {mealLabel.toLowerCase()} preferences
       </h2>
       <p className="text-body text-[#737373] mb-3">
-        Day {day} · {typeLabel} menu — select all that appeal to you.
+        Day {day} · {typeLabel} menu — pick the styles you enjoy.
       </p>
       <p className="text-xs text-[#A8A8A8] mb-8">
-        {selected.size} {selected.size === 1 ? 'dish' : 'dishes'} selected
+        {selectedCats.size} {selectedCats.size === 1 ? 'category' : 'categories'} selected
       </p>
 
       {menuItems.length === 0 ? (
@@ -83,17 +146,17 @@ export function StepDayMenuSelect({
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-          {menuItems.map((item) => {
-            const isSelected = selected.has(item.id)
+        <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4">
+          {groups.map(({ category, items }) => {
+            const isSelected = selectedCats.has(category)
 
             return (
-              <Card3D key={item.id} intensity={6}>
+              <Card3D key={category} intensity={6}>
                 <button
                   type="button"
-                  onClick={() => toggle(item.id)}
+                  onClick={() => toggleCat(category)}
                   className={cn(
-                    'relative w-full h-full text-left rounded-2xl border-2 p-5 transition-all duration-300 cursor-pointer overflow-hidden',
+                    'relative w-full text-left rounded-2xl border-2 p-5 transition-all duration-300 cursor-pointer overflow-hidden',
                     'focus-visible:outline-none',
                     isSelected
                       ? 'border-[#C5A85C] bg-[#FDFAF3] shadow-3d-selected ring-gold-glow'
@@ -116,13 +179,13 @@ export function StepDayMenuSelect({
                   {/* Content */}
                   <div className="relative z-10 pr-6">
                     <p className="font-semibold text-[#1A1A1A] text-sm leading-snug mb-1">
-                      {item.name}
+                      {category}
                     </p>
-                    {item.description && (
-                      <p className="text-xs text-[#737373] leading-relaxed">
-                        {item.description}
-                      </p>
-                    )}
+                    <p className="text-xs text-[#A8A8A8]">
+                      {items.length === 1
+                        ? items[0].name
+                        : `${items.length} varieties`}
+                    </p>
                   </div>
                 </button>
               </Card3D>
