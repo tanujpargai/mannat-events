@@ -48,7 +48,7 @@ create trigger set_themes_updated_at
 -- ============================================================
 create table if not exists public.wedding_functions (
   id          uuid        not null default gen_random_uuid(),
-  name        text        not null,
+  name        text        not null unique,
   is_active   boolean     not null default true,
   sort_order  int         not null default 0,
   primary key (id)
@@ -168,7 +168,7 @@ insert into public.wedding_functions (name, sort_order) values
   ('Mandap Decoration', 5),
   ('Baraat',            6),
   ('Hath Teela',        7)
-on conflict do nothing;
+on conflict (name) do nothing;
 
 -- ============================================================
 -- SEED: Decoration Themes (admin will upload image URLs later)
