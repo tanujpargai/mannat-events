@@ -135,11 +135,7 @@ export default async function DashboardPage() {
             Recent Bookings
           </h2>
           <Link href="/booking">
-            <button className="text-xs font-medium tracking-widest uppercase transition-colors"
-              style={{ color: 'rgba(201,168,76,0.6)' }}
-              onMouseEnter={(e) => (e.currentTarget.style.color = '#C9A84C')}
-              onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(201,168,76,0.6)')}
-            >
+            <button className="text-xs font-medium tracking-widest uppercase transition-colors text-[rgba(201,168,76,0.6)] hover:text-[#C9A84C] cursor-pointer">
               + New Booking
             </button>
           </Link>
