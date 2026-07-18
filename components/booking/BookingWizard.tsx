@@ -590,7 +590,7 @@ export function BookingWizard() {
 
   return (
     <div
-      className="min-h-screen relative overflow-hidden"
+      className="wizard-light min-h-screen relative overflow-hidden"
       style={{
         background: 'radial-gradient(circle at 10% 20%, #FAF8F5 0%, #F5EDD6 100%)',
       }}

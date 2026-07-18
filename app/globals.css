@@ -172,6 +172,17 @@ body {
   color: var(--cream);
 }
 
+/* ── Wizard / light-background context overrides ── */
+/* Any .text-* inside a .wizard-light container renders dark */
+.wizard-light .text-headline,
+.wizard-light .text-subheadline {
+  color: #1A1614;
+}
+.wizard-light .text-body-lg,
+.wizard-light .text-body {
+  color: #4A4540;
+}
+
 .text-subheadline {
   font-family: 'Cormorant Garamond', Georgia, serif;
   font-size: clamp(1.4rem, 2.5vw, 2rem);
