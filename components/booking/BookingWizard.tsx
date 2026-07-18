@@ -18,10 +18,7 @@ import {
 } from '@/lib/utils/booking'
 
 import { StepDates }             from './steps/StepDates'
-import { StepDayRooms }          from './steps/StepDayRooms'
-import { StepDayMealType }       from './steps/StepDayMealType'
-import { StepDayMenuSelect }     from './steps/StepDayMenuSelect'
-import { StepDayGuestCount }     from './steps/StepDayGuestCount'
+import { StepDayPlan }            from './steps/StepDayPlan'
 import { StepWeddingFunctions }  from './steps/StepWeddingFunctions'
 import { StepDecorationTheme }   from './steps/StepDecorationTheme'
 import { StepBaraatStyle }       from './steps/StepBaraatStyle'
@@ -35,13 +32,7 @@ import { LiveBookingSummary }    from './LiveBookingSummary'
 // -------------------------------------------------------
 type StepKind =
   | { kind: 'dates' }
-  | { kind: 'day-rooms';          day: number }
-  | { kind: 'day-lunch-type';     day: number }
-  | { kind: 'day-lunch-menu';     day: number }
-  | { kind: 'day-lunch-guests';   day: number }
-  | { kind: 'day-dinner-type';    day: number }
-  | { kind: 'day-dinner-menu';    day: number }
-  | { kind: 'day-dinner-guests';  day: number }
+  | { kind: 'day-plan';           day: number }
   | { kind: 'functions' }
   | { kind: 'decoration' }
   | { kind: 'baraat' }
@@ -50,13 +41,7 @@ type StepKind =
 function buildStepList(duration: number): StepKind[] {
   const steps: StepKind[] = [{ kind: 'dates' }]
   for (let day = 1; day <= duration; day++) {
-    steps.push({ kind: 'day-rooms',         day })
-    steps.push({ kind: 'day-lunch-type',    day })
-    steps.push({ kind: 'day-lunch-menu',    day })
-    steps.push({ kind: 'day-lunch-guests',  day })
-    steps.push({ kind: 'day-dinner-type',   day })
-    steps.push({ kind: 'day-dinner-menu',   day })
-    steps.push({ kind: 'day-dinner-guests', day })
+    steps.push({ kind: 'day-plan', day })
   }
   steps.push({ kind: 'functions' })
   steps.push({ kind: 'decoration' })
@@ -68,13 +53,7 @@ function buildStepList(duration: number): StepKind[] {
 function stepLabel(step: StepKind): string {
   switch (step.kind) {
     case 'dates':              return 'Stay Dates'
-    case 'day-rooms':          return `Day ${step.day} · Rooms`
-    case 'day-lunch-type':     return `Day ${step.day} · Lunch`
-    case 'day-lunch-menu':     return `Day ${step.day} · Lunch Menu`
-    case 'day-lunch-guests':   return `Day ${step.day} · Lunch Guests`
-    case 'day-dinner-type':    return `Day ${step.day} · Dinner`
-    case 'day-dinner-menu':    return `Day ${step.day} · Dinner Menu`
-    case 'day-dinner-guests':  return `Day ${step.day} · Dinner Guests`
+    case 'day-plan':           return `Day ${step.day} Plan`
     case 'functions':          return 'Functions'
     case 'decoration':         return 'Decoration'
     case 'baraat':             return 'Baraat'
@@ -93,13 +72,7 @@ interface WizardState {
 
 type WizardAction =
   | { type: 'SET_DATES';         checkIn: string; checkOut: string }
-  | { type: 'SET_DAY_ROOMS';     day: number; rooms: number }
-  | { type: 'SET_LUNCH_TYPE';    day: number; mealType: 'veg' | 'non-veg' }
-  | { type: 'SET_LUNCH_MENU';    day: number; ids: string[]; names: string[] }
-  | { type: 'SET_LUNCH_GUESTS';  day: number; count: number }
-  | { type: 'SET_DINNER_TYPE';   day: number; mealType: 'veg' | 'non-veg' }
-  | { type: 'SET_DINNER_MENU';   day: number; ids: string[]; names: string[] }
-  | { type: 'SET_DINNER_GUESTS'; day: number; count: number }
+  | { type: 'SET_DAY_PLAN';      day: number; plan: DayPlan }
   | { type: 'SET_FUNCTIONS';     assignments: FunctionAssignment[] }
   | { type: 'SET_DECORATION';    id: string; title: string }
   | { type: 'SET_BARAAT';        style: string }
@@ -134,87 +107,12 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
       }
     }
 
-    case 'SET_DAY_ROOMS':
+    case 'SET_DAY_PLAN':
       return {
         ...state,
         data: {
           ...state.data,
-          day_plans: updateDayPlan(state.data.day_plans!, action.day, (p) => ({
-            ...p,
-            rooms: action.rooms,
-          })),
-        },
-      }
-
-    case 'SET_LUNCH_TYPE':
-      return {
-        ...state,
-        data: {
-          ...state.data,
-          day_plans: updateDayPlan(state.data.day_plans!, action.day, (p) => ({
-            ...p,
-            lunch: { ...p.lunch, type: action.mealType, menu_item_ids: [], menu_item_names: [] },
-          })),
-        },
-      }
-
-    case 'SET_LUNCH_MENU':
-      return {
-        ...state,
-        data: {
-          ...state.data,
-          day_plans: updateDayPlan(state.data.day_plans!, action.day, (p) => ({
-            ...p,
-            lunch: { ...p.lunch, menu_item_ids: action.ids, menu_item_names: action.names },
-          })),
-        },
-      }
-
-    case 'SET_LUNCH_GUESTS':
-      return {
-        ...state,
-        data: {
-          ...state.data,
-          day_plans: updateDayPlan(state.data.day_plans!, action.day, (p) => ({
-            ...p,
-            lunch: { ...p.lunch, guest_count: action.count },
-          })),
-        },
-      }
-
-    case 'SET_DINNER_TYPE':
-      return {
-        ...state,
-        data: {
-          ...state.data,
-          day_plans: updateDayPlan(state.data.day_plans!, action.day, (p) => ({
-            ...p,
-            dinner: { ...p.dinner, type: action.mealType, menu_item_ids: [], menu_item_names: [] },
-          })),
-        },
-      }
-
-    case 'SET_DINNER_MENU':
-      return {
-        ...state,
-        data: {
-          ...state.data,
-          day_plans: updateDayPlan(state.data.day_plans!, action.day, (p) => ({
-            ...p,
-            dinner: { ...p.dinner, menu_item_ids: action.ids, menu_item_names: action.names },
-          })),
-        },
-      }
-
-    case 'SET_DINNER_GUESTS':
-      return {
-        ...state,
-        data: {
-          ...state.data,
-          day_plans: updateDayPlan(state.data.day_plans!, action.day, (p) => ({
-            ...p,
-            dinner: { ...p.dinner, guest_count: action.count },
-          })),
+          day_plans: updateDayPlan(state.data.day_plans!, action.day, () => action.plan),
         },
       }
 
@@ -415,114 +313,18 @@ export function BookingWizard() {
           />
         )
 
-      case 'day-rooms':
+      case 'day-plan': {
+        const plan = getDayPlan(step.day)!
+        const duration = calculateDuration(data.check_in ?? '', data.check_out ?? '')
         return (
-          <StepDayRooms
+          <StepDayPlan
             day={step.day}
-            data={data}
-            onNext={(rooms) => {
-              dispatch({ type: 'SET_DAY_ROOMS', day: step.day, rooms })
-              next()
-            }}
-            onPrev={prev}
-          />
-        )
-
-      case 'day-lunch-type': {
-        const plan = getDayPlan(step.day)
-        return (
-          <StepDayMealType
-            day={step.day}
-            meal="lunch"
-            currentType={plan?.lunch.type}
-            onNext={(mealType) => {
-              dispatch({ type: 'SET_LUNCH_TYPE', day: step.day, mealType })
-              next()
-            }}
-            onPrev={prev}
-          />
-        )
-      }
-
-      case 'day-lunch-menu': {
-        const plan     = getDayPlan(step.day)
-        const mealType = plan?.lunch.type ?? 'veg'
-        return (
-          <StepDayMenuSelect
-            day={step.day}
-            meal="lunch"
-            mealType={mealType}
-            menuItems={menus[mealType] ?? []}
-            selectedIds={plan?.lunch.menu_item_ids ?? []}
-            onNext={(ids, names) => {
-              dispatch({ type: 'SET_LUNCH_MENU', day: step.day, ids, names })
-              next()
-            }}
-            onPrev={prev}
-          />
-        )
-      }
-
-      case 'day-lunch-guests': {
-        const plan = getDayPlan(step.day)
-        return (
-          <StepDayGuestCount
-            day={step.day}
-            meal="lunch"
-            currentCount={plan?.lunch.guest_count}
-            onNext={(count) => {
-              dispatch({ type: 'SET_LUNCH_GUESTS', day: step.day, count })
-              next()
-            }}
-            onPrev={prev}
-          />
-        )
-      }
-
-      case 'day-dinner-type': {
-        const plan = getDayPlan(step.day)
-        return (
-          <StepDayMealType
-            day={step.day}
-            meal="dinner"
-            currentType={plan?.dinner.type}
-            onNext={(mealType) => {
-              dispatch({ type: 'SET_DINNER_TYPE', day: step.day, mealType })
-              next()
-            }}
-            onPrev={prev}
-          />
-        )
-      }
-
-      case 'day-dinner-menu': {
-        const plan     = getDayPlan(step.day)
-        const mealType = plan?.dinner.type ?? 'non-veg'
-        return (
-          <StepDayMenuSelect
-            day={step.day}
-            meal="dinner"
-            mealType={mealType}
-            menuItems={menus[mealType] ?? []}
-            selectedIds={plan?.dinner.menu_item_ids ?? []}
-            onNext={(ids, names) => {
-              dispatch({ type: 'SET_DINNER_MENU', day: step.day, ids, names })
-              next()
-            }}
-            onPrev={prev}
-          />
-        )
-      }
-
-      case 'day-dinner-guests': {
-        const plan = getDayPlan(step.day)
-        return (
-          <StepDayGuestCount
-            day={step.day}
-            meal="dinner"
-            currentCount={plan?.dinner.guest_count}
-            onNext={(count) => {
-              dispatch({ type: 'SET_DINNER_GUESTS', day: step.day, count })
+            totalDays={duration}
+            plan={plan}
+            vegMenuItems={menus['veg'] ?? []}
+            nonVegMenuItems={menus['non-veg'] ?? []}
+            onNext={(newPlan) => {
+              dispatch({ type: 'SET_DAY_PLAN', day: step.day, plan: newPlan })
               next()
             }}
             onPrev={prev}
