@@ -64,7 +64,7 @@ export const BookingSchema = z.object({
   decoration_theme_title: z.string().optional().nullable(),
 
   baraat_style: z.enum(['traditional', 'stylish', 'dj-on-wheels'], {
-    errorMap: () => ({ message: 'Please select a baraat style' }),
+    message: 'Please select a baraat style',
   }),
 
   phone: z.string().optional(),
