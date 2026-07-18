@@ -103,7 +103,7 @@ export function BookingDetailCard({ booking }: BookingDetailCardProps) {
               {booking.booking_id}
             </h2>
             <p className="text-xs text-[#737373] mt-1">
-              Created on {new Date(booking.created_at).toLocaleDateString()}
+              Created on {new Date(booking.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
             </p>
           </div>
           <div className="sm:text-right">
