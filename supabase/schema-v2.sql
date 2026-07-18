@@ -28,7 +28,7 @@ create trigger set_menus_updated_at
 -- ============================================================
 create table if not exists public.decoration_themes (
   id          uuid        not null default gen_random_uuid(),
-  title       text        not null,
+  title       text        not null unique,
   description text,
   image_url   text,
   is_active   boolean     not null default true,
@@ -177,28 +177,31 @@ insert into public.decoration_themes (title, description, image_url, sort_order)
   (
     'Floral Elegance',
     'A dreamy garden celebration with fresh blooms, soft pastel palettes, and floral archways that transform your venue into a romantic paradise.',
-    null,
+    '/floral.jpg',
     1
   ),
   (
     'Royal Luxury',
     'Opulent gold and ivory regalia, dramatic drapery, and regal décor that creates an atmosphere of timeless grandeur fit for royalty.',
-    null,
+    '/royal.jpg',
     2
   ),
   (
     'Traditional Indian',
     'Rich marigold garlands, vibrant reds, and intricate mandap craftsmanship celebrating the authentic beauty of Indian wedding traditions.',
-    null,
+    '/traditional.jpg',
     3
   ),
   (
     'Modern Minimalist',
     'Clean architectural lines, neutral tones with deliberate gold accents, and curated elements that let the love story be the centrepiece.',
-    null,
+    '/modern.jpg',
     4
   )
-on conflict do nothing;
+on conflict (title) do update set 
+  description = excluded.description,
+  image_url = excluded.image_url,
+  sort_order = excluded.sort_order;
 
 -- ============================================================
 -- SEED: Veg Menu Items

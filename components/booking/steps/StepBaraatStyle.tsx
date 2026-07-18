@@ -6,6 +6,8 @@ import { Card3D } from '@/components/ui/Card3D'
 import { Button } from '@/components/ui/Button'
 import { cn } from '@/lib/utils/cn'
 
+import { Crown, Car, Disc } from 'lucide-react'
+
 interface Props {
   data: Partial<BookingFormData>
   onNext: (style: string) => void
@@ -15,7 +17,7 @@ interface Props {
 const STYLES = [
   {
     id:          'traditional',
-    emoji:       '🐘',
+    icon:        <Crown size={32} className="text-amber-600" strokeWidth={1.5} />,
     title:       'Traditional Baraat',
     description: 'Classic procession with dhol, shehnai, and a beautifully decorated horse leading the groom.',
     gradient:    'from-amber-50 to-orange-50',
@@ -25,7 +27,7 @@ const STYLES = [
   },
   {
     id:          'stylish',
-    emoji:       '✨',
+    icon:        <Car size={32} className="text-violet-600" strokeWidth={1.5} />,
     title:       'Stylish Baraat',
     description: 'Modern flair with LED lights, vintage cars, and a choreographed entry that wows every guest.',
     gradient:    'from-violet-50 to-purple-50',
@@ -35,8 +37,8 @@ const STYLES = [
   },
   {
     id:          'dj-on-wheels',
-    emoji:       '🎧',
-    title:       'DJ on Wheels',
+    icon:        <Disc size={32} className="text-blue-600 animate-spin-slow" strokeWidth={1.5} />,
+    title: 'DJ on Wheels',
     description: 'High-energy mobile DJ setup with thundering bass, laser lights, and non-stop celebration.',
     gradient:    'from-blue-50 to-cyan-50',
     border:      'border-blue-200',
@@ -95,13 +97,13 @@ export function StepBaraatStyle({ data, onNext, onPrev }: Props) {
                   </div>
                 )}
 
-                {/* Emoji icon */}
+                {/* Icon wrapper */}
                 <div className={cn(
-                  'relative z-10 w-16 h-16 rounded-2xl flex items-center justify-center mb-6 text-4xl',
+                  'relative z-10 w-16 h-16 rounded-2xl flex items-center justify-center mb-6',
                   'shadow-sm border border-white/60',
                   style.iconBg
                 )}>
-                  {style.emoji}
+                  {style.icon}
                 </div>
 
                 <div className="relative z-10">
