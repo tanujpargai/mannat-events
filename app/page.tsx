@@ -10,13 +10,15 @@ import { TestimonialsSection } from '@/components/landing/TestimonialsSection'
 import { CTASection }         from '@/components/landing/CTASection'
 import { LandingFooter }      from '@/components/landing/LandingFooter'
 
+import { DestinationsSection } from '@/components/landing/DestinationsSection'
+
 export const metadata: Metadata = {
-  title: 'Mannat Events — Destination Wedding Specialists',
+  title: 'Mannat Events — Royal Destination Weddings in Agra',
   description:
-    'Plan your dream Indian destination wedding with Mannat Events. Palaces, lakeside mandaps, curated cuisine and unforgettable ceremonies across Rajasthan, Goa, Kerala and beyond.',
+    'Plan your dream destination wedding in Agra with Mannat Events. Exquisite Taj Mahal view terraces, majestic Mughal gardens, curated banquets and unforgettable ceremonies.',
   openGraph: {
-    title: 'Mannat Events — Where Forever Begins',
-    description: 'India\'s premier destination wedding specialists.',
+    title: 'Mannat Events — Where Forever Begins in Agra',
+    description: 'Agra\'s premier destination wedding specialists.',
     images: ['/wedding_mandap.png'],
   },
 }
@@ -35,6 +37,9 @@ export default async function RootPage() {
         <MarqueeStrip />
         <section id="offerings">
           <OfferingsSection />
+        </section>
+        <section id="destinations">
+          <DestinationsSection />
         </section>
         <section id="gallery">
           <GallerySection />

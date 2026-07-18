@@ -44,8 +44,9 @@ export function LandingNavbar({ isLoggedIn }: Props) {
           <nav className="hidden md:flex items-center gap-8">
             {[
               { label: 'Offerings', href: '#offerings' },
-              { label: 'Gallery', href: '#gallery' },
-              { label: 'Process', href: '#process' },
+              { label: 'Venues',    href: '#destinations' },
+              { label: 'Gallery',   href: '#gallery' },
+              { label: 'Process',   href: '#process' },
             ].map((item) => (
               <a
                 key={item.href}
@@ -126,8 +127,9 @@ export function LandingNavbar({ isLoggedIn }: Props) {
             <nav className="flex flex-col items-center gap-8 py-12">
               {[
                 { label: 'Offerings', href: '#offerings' },
-                { label: 'Gallery', href: '#gallery' },
-                { label: 'Process', href: '#process' },
+                { label: 'Venues',    href: '#destinations' },
+                { label: 'Gallery',   href: '#gallery' },
+                { label: 'Process',   href: '#process' },
               ].map((item) => (
                 <a
                   key={item.href}

@@ -1,42 +1,43 @@
 'use client'
 
-import { motion, useInView } from 'framer-motion'
 import { useRef } from 'react'
+import { motion, useInView } from 'framer-motion'
 import { Card3D } from '@/components/ui/Card3D'
+import { Castle, Flower2, Utensils, Music, Crown, Bed } from 'lucide-react'
 
 const offerings = [
   {
-    icon: '🏰',
+    icon: <Castle className="text-[#C5A85C]" size={24} strokeWidth={1.5} />,
     title: 'Palace & Heritage Venues',
     desc: 'Exclusive partnerships with India\'s most iconic havelis, lake palaces and royal estates across Rajasthan, Kerala and Goa.',
     accent: 'rgba(201,168,76,0.12)',
   },
   {
-    icon: '🌺',
+    icon: <Flower2 className="text-[#C5A85C]" size={24} strokeWidth={1.5} />,
     title: 'Floral & Décor Architecture',
     desc: 'From marigold-draped mandaps to jasmine-scented reception halls — every petal placed with intention.',
     accent: 'rgba(232,180,160,0.10)',
   },
   {
-    icon: '🍽️',
+    icon: <Utensils className="text-[#C5A85C]" size={24} strokeWidth={1.5} />,
     title: 'Bespoke Culinary Experiences',
     desc: 'Curated menus from North Indian thalis to coastal seafood feasts, managed day-by-day for every guest.',
     accent: 'rgba(139,158,135,0.10)',
   },
   {
-    icon: '🎶',
+    icon: <Music className="text-[#C5A85C]" size={24} strokeWidth={1.5} />,
     title: 'Sangeet & Entertainment',
     desc: 'Live orchestras, folk artists, DJ setups and choreographed performances that electrify every celebration.',
     accent: 'rgba(201,168,76,0.08)',
   },
   {
-    icon: '🐘',
+    icon: <Crown className="text-[#C5A85C]" size={24} strokeWidth={1.5} />,
     title: 'Grand Baraat Procession',
     desc: 'Traditional, stylish or DJ-on-wheels — we orchestrate the groom\'s arrival as a cinematic spectacle.',
     accent: 'rgba(201,168,76,0.08)',
   },
   {
-    icon: '🛏️',
+    icon: <Bed className="text-[#C5A85C]" size={24} strokeWidth={1.5} />,
     title: 'Luxury Accommodation',
     desc: 'Block-book heritage suites, garden cottages and lakeside villas, curated for every guest\'s comfort.',
     accent: 'rgba(201,168,76,0.08)',
