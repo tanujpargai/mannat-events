@@ -119,11 +119,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         </div>
 
         {/* Back to home */}
-        <Link href="/" className="mt-8 text-xs tracking-widest uppercase transition-colors"
-          style={{ color: 'rgba(201,168,76,0.5)' }}
-          onMouseEnter={(e) => (e.currentTarget.style.color = '#C9A84C')}
-          onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(201,168,76,0.5)')}
-        >
+        <Link href="/" className="mt-8 text-xs tracking-widest uppercase transition-colors text-[rgba(201,168,76,0.5)] hover:text-[#C9A84C]">
           ← Back to Home
         </Link>
       </div>
