@@ -186,7 +186,11 @@ export default async function DashboardPage() {
                       </td>
                       <td className="font-medium text-sm" style={{ color: '#FAF3E8' }}>{formatDate(booking.check_in)}</td>
                       <td className="font-medium text-sm" style={{ color: '#FAF3E8' }}>{formatDate(booking.check_out)}</td>
-                      <td className="text-sm" style={{ color: 'rgba(250,243,232,0.6)' }}>{booking.guests}</td>
+                      <td className="text-sm" style={{ color: 'rgba(250,243,232,0.6)' }}>
+                        {Array.isArray(booking.day_plans) && booking.day_plans.length > 0
+                          ? Math.max(...(booking.day_plans as any[]).map(p => Math.max(p.lunch?.guest_count ?? 0, p.dinner?.guest_count ?? 0)))
+                          : 0}
+                      </td>
                       <td><StatusBadge status={booking.status} /></td>
                     </tr>
                   ))}

@@ -77,7 +77,9 @@ export function BookingTable({ bookings }: BookingTableProps) {
                 </td>
 
                 <td className="text-[#737373]">
-                  {booking.guests}
+                  {Array.isArray(booking.day_plans) && booking.day_plans.length > 0
+                    ? Math.max(...(booking.day_plans as any[]).map(p => Math.max(p.lunch?.guest_count ?? 0, p.dinner?.guest_count ?? 0)))
+                    : 0}
                 </td>
 
                 <td>

@@ -51,6 +51,11 @@ export default async function ConfirmationPage({ searchParams }: ConfirmationPag
 
   const b = booking as Booking
 
+  const dayPlans = b.day_plans as any[]
+  const peakGuests = Array.isArray(dayPlans) && dayPlans.length > 0
+    ? Math.max(...dayPlans.map(p => Math.max(p.lunch?.guest_count ?? 0, p.dinner?.guest_count ?? 0)))
+    : 0
+
   return (
     <div className="max-w-xl mx-auto space-y-8 py-4 animate-fade-up">
       {/* Success Banner */}
@@ -80,7 +85,7 @@ export default async function ConfirmationPage({ searchParams }: ConfirmationPag
           <DetailRow label="Check-in"  value={formatDate(b.check_in)} />
           <DetailRow label="Check-out" value={formatDate(b.check_out)} />
           <DetailRow label="Duration"  value={`${b.duration} ${b.duration === 1 ? 'night' : 'nights'}`} />
-          <DetailRow label="Guests"    value={b.guests} />
+          <DetailRow label="Guests"    value={peakGuests} />
         </div>
       </Card>
 
