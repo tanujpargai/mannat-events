@@ -55,6 +55,11 @@ export interface DayPlan {
   rooms: number
   lunch: MealSelection
   dinner: MealSelection
+  // Simplified wizard state
+  guests?: number
+  foodPreference?: 'Veg' | 'Non-Veg' | 'Mixed'
+  lunchFunction?: string
+  dinnerFunction?: string
 }
 
 // -------------------------------------------------------
@@ -98,7 +103,6 @@ export interface Booking {
   check_out: string
   duration: number
   phone: string | null
-  baraat_style: string | null
   decoration_theme_id: string | null
   day_plans: DayPlan[]
   functions: FunctionAssignment[]
@@ -124,10 +128,12 @@ export interface BookingFormData {
   decoration_theme_id: string
   /** Title kept for display without re-fetching */
   decoration_theme_title: string
-  /** e.g. 'traditional' | 'stylish' | 'dj-on-wheels' */
-  baraat_style: string
   /** Optional phone — OTP will be added later */
   phone?: string
+  /** Standard decoration package selected in Step 3 */
+  decorationPackage?: string
+  /** Selected hotel from comparison step */
+  selected_hotel?: string
 }
 
 // -------------------------------------------------------

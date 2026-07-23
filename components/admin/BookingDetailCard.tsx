@@ -7,7 +7,7 @@ import {
   BookingStatus,
   BOOKING_STATUS_LABELS,
 } from '@/lib/types'
-import { formatDate, getBaraatLabel } from '@/lib/utils/booking'
+import { formatDate } from '@/lib/utils/booking'
 import { StatusBadge } from '@/components/admin/StatusBadge'
 import { MealSummary } from '@/components/admin/MealSummary'
 import { Button } from '@/components/ui/Button'
@@ -149,7 +149,6 @@ export function BookingDetailCard({ booking }: BookingDetailCardProps) {
         </div>
         <div className="px-6 py-2">
           <DetailRow label="Decoration Theme ID" value={booking.decoration_theme_id} mono />
-          <DetailRow label="Baraat Style" value={booking.baraat_style ? getBaraatLabel(booking.baraat_style) : 'None selected'} />
         </div>
       </Card>
 

@@ -67,14 +67,3 @@ export function generateDefaultDayPlans(duration: number): DayPlan[] {
   }))
 }
 
-/**
- * Returns label for baraat style
- */
-export function getBaraatLabel(style: string): string {
-  const labels: Record<string, string> = {
-    traditional:   'Traditional Baraat',
-    stylish:       'Stylish Baraat',
-    'dj-on-wheels': 'DJ on Wheels',
-  }
-  return labels[style] ?? style
-}

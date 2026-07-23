@@ -1,13 +1,12 @@
 import { BookingFormData } from '@/lib/types'
-import { formatDate, calculateDuration, getBaraatLabel } from '@/lib/utils/booking'
+import { formatDate, calculateDuration } from '@/lib/utils/booking'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 
 interface StepReviewProps {
   data: BookingFormData
-  onSubmit: () => void
+  onNext: () => void
   onPrev: () => void
-  isSubmitting: boolean
 }
 
 function ReviewRow({ label, value }: { label: string; value: string | number }) {
@@ -23,7 +22,7 @@ function ReviewRow({ label, value }: { label: string; value: string | number }) 
   )
 }
 
-export function StepReview({ data, onSubmit, onPrev, isSubmitting }: StepReviewProps) {
+export function StepReview({ data, onNext, onPrev }: StepReviewProps) {
   const duration  = calculateDuration(data.check_in, data.check_out)
   const dayPlans  = data.day_plans   ?? []
   const functions = data.functions   ?? []
@@ -129,10 +128,6 @@ export function StepReview({ data, onSubmit, onPrev, isSubmitting }: StepReviewP
           {data.decoration_theme_title && (
             <ReviewRow label="Decoration Theme" value={data.decoration_theme_title} />
           )}
-          <ReviewRow
-            label="Baraat Style"
-            value={data.baraat_style ? getBaraatLabel(data.baraat_style) : 'Not selected'}
-          />
         </div>
       </Card>
 
@@ -151,11 +146,10 @@ export function StepReview({ data, onSubmit, onPrev, isSubmitting }: StepReviewP
         <Button
           size="lg"
           variant="gold"
-          loading={isSubmitting}
-          onClick={onSubmit}
+          onClick={onNext}
           className="w-full sm:w-auto"
         >
-          Confirm Booking Request
+          Click to See Prices
         </Button>
       </div>
     </div>

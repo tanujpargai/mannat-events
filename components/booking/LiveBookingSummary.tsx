@@ -1,5 +1,5 @@
 import { BookingFormData } from '@/lib/types'
-import { calculateDuration, getBaraatLabel } from '@/lib/utils/booking'
+import { calculateDuration } from '@/lib/utils/booking'
 
 interface LiveBookingSummaryProps {
   data: Partial<BookingFormData>
@@ -111,7 +111,6 @@ export function LiveBookingSummary({ data }: LiveBookingSummaryProps) {
         )}
 
         <SummaryRow label="Decoration" value={data.decoration_theme_title} />
-        <SummaryRow label="Baraat"     value={data.baraat_style ? getBaraatLabel(data.baraat_style) : undefined} />
       </div>
     </div>
   )

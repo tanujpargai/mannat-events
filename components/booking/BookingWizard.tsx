@@ -19,10 +19,11 @@ import {
 
 import { StepDates }             from './steps/StepDates'
 import { StepDayPlan }            from './steps/StepDayPlan'
-import { StepWeddingFunctions }  from './steps/StepWeddingFunctions'
+import { StepDecorationPackage }  from './steps/StepDecorationPackage'
 import { StepDecorationTheme }   from './steps/StepDecorationTheme'
-import { StepBaraatStyle }       from './steps/StepBaraatStyle'
 import { StepReview }            from './steps/StepReview'
+import { StepMobileVerification } from './steps/StepMobileVerification'
+import { StepHotelComparison }    from './steps/StepHotelComparison'
 
 import { DynamicProgressBar }    from './DynamicProgressBar'
 import { LiveBookingSummary }    from './LiveBookingSummary'
@@ -32,32 +33,34 @@ import { LiveBookingSummary }    from './LiveBookingSummary'
 // -------------------------------------------------------
 type StepKind =
   | { kind: 'dates' }
-  | { kind: 'day-plan';           day: number }
-  | { kind: 'functions' }
-  | { kind: 'decoration' }
-  | { kind: 'baraat' }
+  | { kind: 'day-plan' }
+  | { kind: 'decoration-package' }
+  | { kind: 'decoration-theme' }
   | { kind: 'review' }
+  | { kind: 'mobile-verification' }
+  | { kind: 'hotel-comparison' }
 
 function buildStepList(duration: number): StepKind[] {
-  const steps: StepKind[] = [{ kind: 'dates' }]
-  for (let day = 1; day <= duration; day++) {
-    steps.push({ kind: 'day-plan', day })
-  }
-  steps.push({ kind: 'functions' })
-  steps.push({ kind: 'decoration' })
-  steps.push({ kind: 'baraat' })
-  steps.push({ kind: 'review' })
-  return steps
+  return [
+    { kind: 'dates' },
+    { kind: 'day-plan' },
+    { kind: 'decoration-package' },
+    { kind: 'decoration-theme' },
+    { kind: 'review' },
+    { kind: 'mobile-verification' },
+    { kind: 'hotel-comparison' },
+  ]
 }
 
 function stepLabel(step: StepKind): string {
   switch (step.kind) {
-    case 'dates':              return 'Stay Dates'
-    case 'day-plan':           return `Day ${step.day} Plan`
-    case 'functions':          return 'Functions'
-    case 'decoration':         return 'Decoration'
-    case 'baraat':             return 'Baraat'
-    case 'review':             return 'Review'
+    case 'dates':              return 'Stay Details'
+    case 'day-plan':           return 'Day-wise Planning'
+    case 'decoration-package': return 'Decoration Package'
+    case 'decoration-theme':   return 'Decoration Theme'
+    case 'review':             return 'Click to See Prices'
+    case 'mobile-verification': return 'Mobile Verification'
+    case 'hotel-comparison':    return 'Hotel Comparison'
   }
 }
 
@@ -73,9 +76,11 @@ interface WizardState {
 type WizardAction =
   | { type: 'SET_DATES';         checkIn: string; checkOut: string }
   | { type: 'SET_DAY_PLAN';      day: number; plan: DayPlan }
+  | { type: 'SET_ALL_DAY_PLANS'; plans: DayPlan[] }
   | { type: 'SET_FUNCTIONS';     assignments: FunctionAssignment[] }
   | { type: 'SET_DECORATION';    id: string; title: string }
-  | { type: 'SET_BARAAT';        style: string }
+  | { type: 'SET_DECORATION_PACKAGE'; package: string }
+  | { type: 'SET_HOTEL';         hotelId: string }
   | { type: 'NEXT' }
   | { type: 'PREV' }
   | { type: 'RESTORE';           state: WizardState }
@@ -93,11 +98,17 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
     case 'SET_DATES': {
       const duration = calculateDuration(action.checkIn, action.checkOut)
       const steps    = buildStepList(duration)
-      const dayPlans = generateDefaultDayPlans(duration)
+      const oldPlans = state.data.day_plans || []
+      const defaultPlans = generateDefaultDayPlans(duration)
+      
+      const dayPlans = defaultPlans.map(defaultPlan => {
+        const existing = oldPlans.find(p => p.day === defaultPlan.day)
+        return existing ? existing : defaultPlan
+      })
+
       return {
         ...state,
         steps,
-        stepIndex: 1,
         data: {
           ...state.data,
           check_in:  action.checkIn,
@@ -116,6 +127,15 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
         },
       }
 
+    case 'SET_ALL_DAY_PLANS':
+      return {
+        ...state,
+        data: {
+          ...state.data,
+          day_plans: action.plans,
+        },
+      }
+
     case 'SET_FUNCTIONS':
       return { ...state, data: { ...state.data, functions: action.assignments } }
 
@@ -129,8 +149,23 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
         },
       }
 
-    case 'SET_BARAAT':
-      return { ...state, data: { ...state.data, baraat_style: action.style } }
+    case 'SET_DECORATION_PACKAGE':
+      return {
+        ...state,
+        data: {
+          ...state.data,
+          decorationPackage: action.package,
+        },
+      }
+
+    case 'SET_HOTEL':
+      return {
+        ...state,
+        data: {
+          ...state.data,
+          selected_hotel: action.hotelId,
+        },
+      }
 
     case 'NEXT':
       return {
@@ -152,12 +187,12 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
   }
 }
 
-const STORAGE_KEY = 'mannat-booking-v4'
+const STORAGE_KEY = 'mannat-booking-v8'
 
 function loadSavedState(): Partial<WizardState> | null {
   if (typeof window === 'undefined') return null
   // Clear out all old versioned keys so stale data can't bleed through
-  ;['mannat-booking-v1', 'mannat-booking-v2', 'mannat-booking-v3'].forEach((k) => {
+  ;['mannat-booking-v1', 'mannat-booking-v2', 'mannat-booking-v3', 'mannat-booking-v4', 'mannat-booking-v5', 'mannat-booking-v6', 'mannat-booking-v7'].forEach((k) => {
     try { localStorage.removeItem(k) } catch { /* ignore */ }
   })
   try {
@@ -309,22 +344,17 @@ export function BookingWizard() {
             data={data}
             onNext={(vals) => {
               dispatch({ type: 'SET_DATES', checkIn: vals.check_in, checkOut: vals.check_out })
+              next()
             }}
           />
         )
 
       case 'day-plan': {
-        const plan = getDayPlan(step.day)!
-        const duration = calculateDuration(data.check_in ?? '', data.check_out ?? '')
         return (
           <StepDayPlan
-            day={step.day}
-            totalDays={duration}
-            plan={plan}
-            vegMenuItems={menus['veg'] ?? []}
-            nonVegMenuItems={menus['non-veg'] ?? []}
-            onNext={(newPlan) => {
-              dispatch({ type: 'SET_DAY_PLAN', day: step.day, plan: newPlan })
+            data={data}
+            onUpdate={(plans) => dispatch({ type: 'SET_ALL_DAY_PLANS', plans })}
+            onNext={() => {
               next()
             }}
             onPrev={prev}
@@ -332,21 +362,19 @@ export function BookingWizard() {
         )
       }
 
-      case 'functions':
+      case 'decoration-package':
         return (
-          <StepWeddingFunctions
-            duration={calculateDuration(data.check_in ?? '', data.check_out ?? '')}
-            functions={functions}
-            assignments={data.functions ?? []}
-            onNext={(assignments) => {
-              dispatch({ type: 'SET_FUNCTIONS', assignments })
+          <StepDecorationPackage
+            data={data}
+            onNext={(pkg) => {
+              dispatch({ type: 'SET_DECORATION_PACKAGE', package: pkg })
               next()
             }}
             onPrev={prev}
           />
         )
 
-      case 'decoration':
+      case 'decoration-theme':
         return (
           <StepDecorationTheme
             data={data}
@@ -359,19 +387,16 @@ export function BookingWizard() {
           />
         )
 
-      case 'baraat':
+      case 'review':
         return (
-          <StepBaraatStyle
-            data={data}
-            onNext={(style) => {
-              dispatch({ type: 'SET_BARAAT', style })
-              next()
-            }}
+          <StepReview
+            data={data as BookingFormData}
+            onNext={next}
             onPrev={prev}
           />
         )
 
-      case 'review':
+      case 'mobile-verification':
         return (
           <>
             {submitError && (
@@ -379,9 +404,29 @@ export function BookingWizard() {
                 {submitError}
               </div>
             )}
-            <StepReview
+            <StepMobileVerification
               data={data as BookingFormData}
-              onSubmit={handleSubmit}
+              onPrev={prev}
+              onSubmit={next}
+              isSubmitting={isSubmitting}
+            />
+          </>
+        )
+        
+      case 'hotel-comparison':
+        return (
+          <>
+            {submitError && (
+              <div className="mb-6 px-5 py-4 rounded-2xl bg-red-50 border border-red-200 text-sm text-red-700 font-medium">
+                {submitError}
+              </div>
+            )}
+            <StepHotelComparison
+              data={data as BookingFormData}
+              onNext={(hotelId) => {
+                dispatch({ type: 'SET_HOTEL', hotelId })
+                handleSubmit()
+              }}
               onPrev={prev}
               isSubmitting={isSubmitting}
             />
@@ -443,7 +488,7 @@ export function BookingWizard() {
           <main className="flex-1 min-w-0">
             <div className="max-w-3xl">
               <AnimatePresence mode="wait">
-                <div key={`${currentStep.kind}-${'day' in currentStep ? currentStep.day : ''}`}>
+                <div key={currentStep.kind}>
                   {renderStep(currentStep)}
                 </div>
               </AnimatePresence>
