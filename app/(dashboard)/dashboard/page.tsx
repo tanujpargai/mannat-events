@@ -43,24 +43,29 @@ export default async function DashboardPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  if (!user) {
-    redirect('/login')
+  let bookings = null
+  let profile = null
+
+  if (user) {
+    const { data: userBookings } = await supabase
+      .from('bookings')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(5)
+    bookings = userBookings
+
+    const { data: userProfile } = await supabase
+      .from('profiles')
+      .select('full_name')
+      .eq('id', user.id)
+      .single()
+    profile = userProfile
   }
 
-  const { data: bookings } = await supabase
-    .from('bookings')
-    .select('*')
-    .eq('user_id', user.id)
-    .order('created_at', { ascending: false })
-    .limit(5)
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('full_name')
-    .eq('id', user.id)
-    .single()
-
-  const firstName = profile?.full_name?.trim().split(' ')[0] || user?.email?.split('@')[0] || 'Guest'
+  const firstName = user 
+    ? (profile?.full_name?.trim().split(' ')[0] || user?.phone || 'Guest')
+    : 'Guest'
   const hour = new Date().getHours()
   const greeting = hour < 12 ? 'Good Morning' : hour < 17 ? 'Good Afternoon' : 'Good Evening'
 

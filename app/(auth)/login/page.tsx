@@ -35,14 +35,7 @@ export default function LoginPage() {
       </Suspense>
 
       <p className="mt-6 text-center text-sm" style={{ color: 'rgba(250,243,232,0.4)' }}>
-        Don&apos;t have an account?{' '}
-        <Link
-          href="/signup"
-          className="font-medium transition-colors"
-          style={{ color: '#C9A84C' }}
-        >
-          Create one
-        </Link>
+        A One-Time Password will be sent to your mobile number to verify your identity.
       </p>
     </>
   )

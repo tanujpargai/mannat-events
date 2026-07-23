@@ -11,13 +11,9 @@ const SPAM_BOOKING_LIMIT = 3
 
 export async function POST(request: NextRequest) {
   try {
-    // 1. Authenticate
+    // 1. Authenticate (optional)
     const supabase = await createClient()
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized. Please sign in.' }, { status: 401 })
-    }
+    const { data: { user } } = await supabase.auth.getUser()
 
     // 2. Parse & validate body
     const body  = await request.json()
@@ -58,16 +54,18 @@ export async function POST(request: NextRequest) {
     // 6. Spam / suspicious activity detection
     let is_flagged = false
 
-    // Check repeated submissions within last hour
-    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString()
-    const { count: recentCount } = await serviceClient
-      .from('bookings')
-      .select('id', { count: 'exact', head: true })
-      .eq('user_id', user.id)
-      .gte('created_at', oneHourAgo)
+    // Check repeated submissions within last hour (only if user is logged in)
+    if (user) {
+      const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString()
+      const { count: recentCount } = await serviceClient
+        .from('bookings')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .gte('created_at', oneHourAgo)
 
-    if ((recentCount ?? 0) >= SPAM_BOOKING_LIMIT) {
-      is_flagged = true
+      if ((recentCount ?? 0) >= SPAM_BOOKING_LIMIT) {
+        is_flagged = true
+      }
     }
 
     // Check unrealistic room counts
@@ -86,8 +84,8 @@ export async function POST(request: NextRequest) {
       .from('bookings')
       .insert({
         booking_id,
-        user_id:              user.id,
-        customer_email:       user.email ?? null,
+        user_id:              user?.id ?? null,
+        customer_email:       user?.email ?? null,
         check_in:             parsed.check_in,
         check_out:            parsed.check_out,
         duration,

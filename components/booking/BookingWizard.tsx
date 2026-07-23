@@ -24,6 +24,7 @@ import { StepDecorationTheme }   from './steps/StepDecorationTheme'
 import { StepReview }            from './steps/StepReview'
 import { StepMobileVerification } from './steps/StepMobileVerification'
 import { StepHotelComparison }    from './steps/StepHotelComparison'
+import { StepFinalEnquiry }       from './steps/StepFinalEnquiry'
 
 import { DynamicProgressBar }    from './DynamicProgressBar'
 import { LiveBookingSummary }    from './LiveBookingSummary'
@@ -39,6 +40,7 @@ type StepKind =
   | { kind: 'review' }
   | { kind: 'mobile-verification' }
   | { kind: 'hotel-comparison' }
+  | { kind: 'final-enquiry' }
 
 function buildStepList(duration: number): StepKind[] {
   return [
@@ -49,6 +51,7 @@ function buildStepList(duration: number): StepKind[] {
     { kind: 'review' },
     { kind: 'mobile-verification' },
     { kind: 'hotel-comparison' },
+    { kind: 'final-enquiry' },
   ]
 }
 
@@ -61,6 +64,7 @@ function stepLabel(step: StepKind): string {
     case 'review':             return 'Click to See Prices'
     case 'mobile-verification': return 'Mobile Verification'
     case 'hotel-comparison':    return 'Hotel Comparison'
+    case 'final-enquiry':       return 'Final Enquiry'
   }
 }
 
@@ -187,12 +191,12 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
   }
 }
 
-const STORAGE_KEY = 'mannat-booking-v8'
+const STORAGE_KEY = 'mannat-booking-v9'
 
 function loadSavedState(): Partial<WizardState> | null {
   if (typeof window === 'undefined') return null
   // Clear out all old versioned keys so stale data can't bleed through
-  ;['mannat-booking-v1', 'mannat-booking-v2', 'mannat-booking-v3', 'mannat-booking-v4', 'mannat-booking-v5', 'mannat-booking-v6', 'mannat-booking-v7'].forEach((k) => {
+  ;['mannat-booking-v1', 'mannat-booking-v2', 'mannat-booking-v3', 'mannat-booking-v4', 'mannat-booking-v5', 'mannat-booking-v6', 'mannat-booking-v7', 'mannat-booking-v8'].forEach((k) => {
     try { localStorage.removeItem(k) } catch { /* ignore */ }
   })
   try {
@@ -240,11 +244,19 @@ export function BookingWizard() {
   // Wizard state — always start with default for SSR hydration safety
   const [state, dispatch] = useReducer(wizardReducer, DEFAULT_WIZARD_STATE)
 
-  // Restore from localStorage AFTER client hydration (avoids SSR mismatch)
+  // Restore saved form data from localStorage AFTER client hydration (avoids SSR mismatch).
+  // Always reset stepIndex to 0 so the wizard always starts from Step 1 (Stay Details),
+  // regardless of which step the user was on when they last left the page.
   useEffect(() => {
     const saved = loadSavedState()
-    if (saved?.data && saved.steps && typeof saved.stepIndex === 'number') {
-      dispatch({ type: 'RESTORE', state: saved as WizardState })
+    if (saved?.data && saved.steps) {
+      dispatch({
+        type: 'RESTORE',
+        state: {
+          ...saved as WizardState,
+          stepIndex: 0, // always start from Step 1
+        },
+      })
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []) // run once on mount only
@@ -415,22 +427,26 @@ export function BookingWizard() {
         
       case 'hotel-comparison':
         return (
-          <>
-            {submitError && (
-              <div className="mb-6 px-5 py-4 rounded-2xl bg-red-50 border border-red-200 text-sm text-red-700 font-medium">
-                {submitError}
-              </div>
-            )}
-            <StepHotelComparison
-              data={data as BookingFormData}
-              onNext={(hotelId) => {
-                dispatch({ type: 'SET_HOTEL', hotelId })
-                handleSubmit()
-              }}
-              onPrev={prev}
-              isSubmitting={isSubmitting}
-            />
-          </>
+          <StepHotelComparison
+            data={data as BookingFormData}
+            onNext={(hotelId) => {
+              dispatch({ type: 'SET_HOTEL', hotelId })
+              next()
+            }}
+            onPrev={prev}
+            isSubmitting={false}
+          />
+        )
+
+      case 'final-enquiry':
+        return (
+          <StepFinalEnquiry
+            data={data as BookingFormData}
+            onPrev={prev}
+            onSubmit={handleSubmit}
+            isSubmitting={isSubmitting}
+            submitError={submitError}
+          />
         )
     }
   }

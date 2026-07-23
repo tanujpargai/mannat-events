@@ -86,7 +86,7 @@ export function LandingNavbar({ isLoggedIn }: Props) {
                 >
                   Sign In
                 </Link>
-                <Link href="/signup">
+                <Link href="/booking">
                   <button
                     className="rounded-full px-6 py-2.5 text-sm font-semibold tracking-wider transition-all duration-300 hover:opacity-90"
                     style={{
@@ -142,7 +142,7 @@ export function LandingNavbar({ isLoggedIn }: Props) {
                 </a>
               ))}
               <div className="flex flex-col gap-4 mt-4 w-full px-8">
-                <Link href={isLoggedIn ? '/dashboard' : '/signup'} onClick={() => setMobileOpen(false)}>
+                <Link href={isLoggedIn ? '/dashboard' : '/booking'} onClick={() => setMobileOpen(false)}>
                   <button className="w-full rounded-full py-4 font-semibold tracking-wider"
                     style={{ background: 'linear-gradient(135deg, #9A7B2E, #C9A84C)', color: '#0A0807' }}>
                     {isLoggedIn ? 'My Dashboard' : 'Start Planning'}

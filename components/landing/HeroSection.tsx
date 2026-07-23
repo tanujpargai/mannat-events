@@ -150,7 +150,7 @@ export function HeroSection({ isLoggedIn }: Props) {
 
           {/* Action CTAs */}
           <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
-            <Link href={isLoggedIn ? '/booking' : '/signup'} className="w-full sm:w-auto">
+            <Link href="/booking" className="w-full sm:w-auto">
               <button
                 className="group relative w-full sm:w-auto overflow-hidden rounded-full px-10 py-4.5 font-bold text-xs tracking-widest uppercase transition-all duration-300 hover:scale-[1.02] flex items-center justify-center gap-2"
                 style={{
@@ -168,7 +168,7 @@ export function HeroSection({ isLoggedIn }: Props) {
               </button>
             </Link>
 
-            <Link href={isLoggedIn ? '/dashboard' : '/login'} className="w-full sm:w-auto">
+            <Link href={isLoggedIn ? '/dashboard' : '/booking'} className="w-full sm:w-auto">
               <button
                 className="w-full sm:w-auto rounded-full px-9 py-4.5 font-bold text-xs tracking-widest uppercase transition-all duration-300 border hover:bg-white/[0.03]"
                 style={{

@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
+import { createServiceClient } from '@/lib/supabase/server'
 import { Booking } from '@/lib/types'
 import { formatDate } from '@/lib/utils/booking'
 import { Card } from '@/components/ui/Card'
@@ -40,7 +40,8 @@ export default async function ConfirmationPage({ searchParams }: ConfirmationPag
 
   if (!bookingId) notFound()
 
-  const supabase = await createClient()
+  // Use service client so public (unauthenticated) users can view their booking
+  const supabase = createServiceClient()
   const { data: booking, error } = await supabase
     .from('bookings')
     .select('*')

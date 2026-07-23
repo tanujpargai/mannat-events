@@ -11,13 +11,16 @@ const NAV_ITEMS = [
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('full_name, role')
-    .eq('id', user.id)
-    .single()
+  let profile = null
+  if (user) {
+    const { data } = await supabase
+      .from('profiles')
+      .select('full_name, role')
+      .eq('id', user.id)
+      .single()
+    profile = data
+  }
 
   async function handleLogout() {
     'use server'
@@ -26,12 +29,14 @@ export default async function DashboardLayout({ children }: { children: React.Re
     redirect('/login')
   }
 
-  const initials = (profile?.full_name ?? user.email ?? '?')
-    .split(' ')
-    .map((w: string) => w[0])
-    .join('')
-    .slice(0, 2)
-    .toUpperCase()
+  const initials = user
+    ? (profile?.full_name ?? user.phone ?? '?')
+        .split(' ')
+        .map((w: string) => w[0])
+        .join('')
+        .slice(0, 2)
+        .toUpperCase()
+    : 'G'
 
   return (
     <div className="min-h-screen flex" style={{ background: '#0A0807' }}>
@@ -104,19 +109,29 @@ export default async function DashboardLayout({ children }: { children: React.Re
                 {profile?.full_name ?? 'Guest'}
               </p>
               <p className="text-xs truncate" style={{ color: 'rgba(250,243,232,0.35)' }}>
-                {user.email}
+                {user?.phone ?? 'Not signed in'}
               </p>
             </div>
           </div>
-          <form action={handleLogout}>
-            <button
-              type="submit"
-              className="w-full text-left text-xs font-medium py-2 px-3 rounded-lg transition-all duration-200"
-              style={{ color: 'rgba(250,243,232,0.4)', border: '1px solid rgba(201,168,76,0.1)' }}
+          {user ? (
+            <form action={handleLogout}>
+              <button
+                type="submit"
+                className="w-full text-left text-xs font-medium py-2 px-3 rounded-lg transition-all duration-200"
+                style={{ color: 'rgba(250,243,232,0.4)', border: '1px solid rgba(201,168,76,0.1)' }}
+              >
+                Sign Out →
+              </button>
+            </form>
+          ) : (
+            <Link
+              href="/login"
+              className="block w-full text-left text-xs font-medium py-2 px-3 rounded-lg transition-all duration-200"
+              style={{ color: 'rgba(201,168,76,0.8)', border: '1px solid rgba(201,168,76,0.2)' }}
             >
-              Sign Out →
-            </button>
-          </form>
+              Sign In →
+            </Link>
+          )}
         </div>
       </aside>
 
@@ -134,9 +149,15 @@ export default async function DashboardLayout({ children }: { children: React.Re
             Mannat Events
           </span>
         </Link>
-        <form action={handleLogout}>
-          <Button type="submit" variant="ghost" size="sm">Sign Out</Button>
-        </form>
+        {user ? (
+          <form action={handleLogout}>
+            <Button type="submit" variant="ghost" size="sm">Sign Out</Button>
+          </form>
+        ) : (
+          <Link href="/login">
+            <Button variant="ghost" size="sm">Sign In</Button>
+          </Link>
+        )}
       </div>
 
       {/* ── MAIN CONTENT ───────────────────────────── */}
