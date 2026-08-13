@@ -1,8 +1,9 @@
-import type { Metadata } from 'next'
+﻿import type { Metadata } from 'next'
 import { SignupForm } from '@/components/auth/SignupForm'
+import Link from 'next/link'
 
 export const metadata: Metadata = {
-  title: 'Create Account — Mannat Events',
+  title: 'Create Account ΓÇö Mannat Events',
   description: 'Create your Mannat Events account and start planning your dream destination wedding.',
 }
 
@@ -16,10 +17,21 @@ export default function SignupPage() {
         Begin your story
       </h2>
       <p className="text-sm mb-8 font-light" style={{ color: 'rgba(250,243,232,0.45)' }}>
-        Enter your name and mobile number to get started.
+        Create your account and start planning your dream wedding.
       </p>
 
       <SignupForm />
+
+      <p className="mt-6 text-center text-sm" style={{ color: 'rgba(250,243,232,0.4)' }}>
+        Already have an account?{' '}
+        <Link
+          href="/login"
+          className="font-medium transition-colors"
+          style={{ color: '#C9A84C' }}
+        >
+          Sign in
+        </Link>
+      </p>
     </>
   )
 }

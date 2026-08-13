@@ -1,9 +1,10 @@
-import type { Metadata } from 'next'
+﻿import type { Metadata } from 'next'
 import { Suspense } from 'react'
 import { LoginForm } from '@/components/auth/LoginForm'
+import Link from 'next/link'
 
 export const metadata: Metadata = {
-  title: 'Sign In — Mannat Events',
+  title: 'Sign In ΓÇö Mannat Events',
   description: 'Sign in to your Mannat Events account to manage your destination wedding.',
 }
 
@@ -17,7 +18,7 @@ export default function LoginPage() {
         Welcome back
       </h2>
       <p className="text-sm mb-8 font-light" style={{ color: 'rgba(250,243,232,0.45)' }}>
-        Enter your mobile number to receive a one-time passcode.
+        Sign in to manage your wedding plans.
       </p>
 
       <Suspense
@@ -32,6 +33,17 @@ export default function LoginPage() {
       >
         <LoginForm />
       </Suspense>
+
+      <p className="mt-6 text-center text-sm" style={{ color: 'rgba(250,243,232,0.4)' }}>
+        Don&apos;t have an account?{' '}
+        <Link
+          href="/signup"
+          className="font-medium transition-colors"
+          style={{ color: '#C9A84C' }}
+        >
+          Create one
+        </Link>
+      </p>
     </>
   )
 }
