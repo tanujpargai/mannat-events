@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { Bed, Leaf, Flame, Users, Check, ChevronDown } from 'lucide-react'
 import { DayPlan, MenuItem } from '@/lib/types'
 import { Button } from '@/components/ui/Button'
@@ -17,31 +17,114 @@ interface Props {
   onPrev: () => void
 }
 
-// ── Category grouping (same logic as StepDayMenuSelect) ──
-const STOP_WORDS = new Set([
-  'stuffed','spiced','slow','fresh','fried','roasted','tandoor','tandoori',
-  'grilled','baked','creamy','royal','shahi','aromatic','plump','tender',
-  'cooked','minced','velvety','fragrant','saffron','layered','coastal',
-  'braised','kashmiri','whole',
-])
-function getCategory(name: string): string {
-  for (const word of name.split(/\s+/)) {
-    const lower = word.toLowerCase().replace(/[^a-z]/g, '')
-    if (lower.length > 2 && !STOP_WORDS.has(lower))
-      return word.charAt(0).toUpperCase() + word.slice(1)
-  }
-  return name.split(/\s+/)[0]
-}
-function groupByCategory(items: MenuItem[]) {
-  const map = new Map<string, MenuItem[]>()
-  for (const item of items) {
-    const cat = getCategory(item.name)
-    if (!map.has(cat)) map.set(cat, [])
-    map.get(cat)!.push(item)
-  }
-  return [...map.entries()]
-    .map(([category, items]) => ({ category, items }))
-    .sort((a, b) => a.category.localeCompare(b.category))
+// ── Mock menu categories with items ──
+const MOCK_MENU: Record<'veg' | 'non-veg', { category: string; emoji: string; items: string[] }[]> = {
+  veg: [
+    {
+      category: 'Starters',
+      emoji: '🥗',
+      items: [
+        'Paneer Tikka',
+        'Veg Spring Rolls',
+        'Dahi Puri Chaat',
+        'Stuffed Mushrooms',
+        'Corn Palak Tikki',
+        'Hara Bhara Kebab',
+      ],
+    },
+    {
+      category: 'Main Course',
+      emoji: '🍛',
+      items: [
+        'Paneer Butter Masala',
+        'Dal Makhani',
+        'Shahi Paneer',
+        'Palak Paneer',
+        'Aloo Gobi',
+        'Mix Veg Sabzi',
+        'Veg Biryani',
+        'Chole Masala',
+      ],
+    },
+    {
+      category: 'Breads & Rice',
+      emoji: '🍚',
+      items: [
+        'Butter Naan',
+        'Tandoori Roti',
+        'Laccha Paratha',
+        'Puri',
+        'Steamed Rice',
+        'Jeera Rice',
+        'Pulao',
+      ],
+    },
+    {
+      category: 'Desserts',
+      emoji: '🍮',
+      items: [
+        'Gulab Jamun',
+        'Rasgulla',
+        'Kheer',
+        'Gajar Halwa',
+        'Moong Dal Halwa',
+        'Ice Cream',
+        'Jalebi',
+        'Barfi',
+      ],
+    },
+  ],
+  'non-veg': [
+    {
+      category: 'Starters',
+      emoji: '🍗',
+      items: [
+        'Chicken Tikka',
+        'Seekh Kebab',
+        'Fish Amritsari',
+        'Mutton Shammi Kebab',
+        'Tandoori Prawns',
+        'Chicken Malai Kebab',
+      ],
+    },
+    {
+      category: 'Main Course',
+      emoji: '🍖',
+      items: [
+        'Butter Chicken',
+        'Mutton Rogan Josh',
+        'Chicken Biryani',
+        'Fish Curry',
+        'Egg Masala',
+        'Chicken Korma',
+        'Mutton Keema Matar',
+      ],
+    },
+    {
+      category: 'Breads & Rice',
+      emoji: '🍚',
+      items: [
+        'Butter Naan',
+        'Tandoori Roti',
+        'Laccha Paratha',
+        'Mutton Biryani Rice',
+        'Pulao',
+        'Steamed Rice',
+      ],
+    },
+    {
+      category: 'Desserts',
+      emoji: '🍮',
+      items: [
+        'Gulab Jamun',
+        'Rasgulla',
+        'Kheer',
+        'Ice Cream',
+        'Halwa',
+        'Barfi',
+      ],
+    },
+  ],
 }
 
 // ── Compact toggle pill ──
@@ -74,50 +157,158 @@ function TogglePill({
   )
 }
 
-// ── Category chip grid ──
-function CategoryChips({
-  items, selected, onChange,
+// ── Menu Category Dropdown accordion ──
+function MenuCategoryDropdown({
+  mealType,
+  selectedItems,
+  onChange,
 }: {
-  items: MenuItem[]
-  selected: Set<string>
+  mealType: 'veg' | 'non-veg'
+  selectedItems: Set<string>
   onChange: (next: Set<string>) => void
 }) {
-  const groups = groupByCategory(items)
-  if (groups.length === 0) {
-    return (
-      <p className="text-xs text-[#A8A8A8] italic">
-        No menu items available yet — you can confirm your selection later.
-      </p>
-    )
+  const [openCategory, setOpenCategory] = useState<string | null>(null)
+  const categories = MOCK_MENU[mealType]
+
+  function toggleItem(item: string) {
+    const next = new Set(selectedItems)
+    next.has(item) ? next.delete(item) : next.add(item)
+    onChange(next)
   }
+
+  function toggleCategory(cat: { category: string; items: string[] }) {
+    const allSelected = cat.items.every(i => selectedItems.has(i))
+    const next = new Set(selectedItems)
+    if (allSelected) {
+      cat.items.forEach(i => next.delete(i))
+    } else {
+      cat.items.forEach(i => next.add(i))
+    }
+    onChange(next)
+  }
+
+  const totalSelected = selectedItems.size
+
   return (
-    <div className="flex flex-wrap gap-2">
-      {groups.map(({ category, items: gItems }) => {
-        const isSel = selected.has(category)
+    <div className="space-y-2">
+      {/* Selected summary badge */}
+      {totalSelected > 0 && (
+        <div className="flex flex-wrap gap-1.5 mb-3">
+          {[...selectedItems].slice(0, 5).map(item => (
+            <span
+              key={item}
+              className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-[#C5A85C] text-white"
+            >
+              {item}
+              <button
+                type="button"
+                onClick={() => toggleItem(item)}
+                className="ml-0.5 hover:opacity-70 transition-opacity"
+              >
+                ×
+              </button>
+            </span>
+          ))}
+          {totalSelected > 5 && (
+            <span className="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-[#F5EDD6] border border-[#E8D9A8] text-[#A08040]">
+              +{totalSelected - 5} more
+            </span>
+          )}
+        </div>
+      )}
+
+      {/* Category dropdowns */}
+      {categories.map(cat => {
+        const isOpen = openCategory === cat.category
+        const selectedCount = cat.items.filter(i => selectedItems.has(i)).length
+        const allSelected = selectedCount === cat.items.length
+
         return (
-          <button
-            key={category}
-            type="button"
-            onClick={() => {
-              const next = new Set(selected)
-              isSel ? next.delete(category) : next.add(category)
-              onChange(next)
-            }}
-            className={cn(
-              'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all duration-200',
-              isSel
-                ? 'bg-[#C5A85C] border-[#C5A85C] text-white shadow-sm'
-                : 'bg-white border-[#E8E2D8] text-[#737373] hover:border-[#C5A85C] hover:text-[#1A1A1A]'
-            )}
+          <div
+            key={cat.category}
+            className="rounded-xl border border-[#E8E2D8] overflow-hidden"
           >
-            {isSel && <Check size={11} strokeWidth={2.5} />}
-            {category}
-            {gItems.length > 1 && (
-              <span className={cn('text-[10px]', isSel ? 'text-white/70' : 'text-[#A8A8A8]')}>
-                ×{gItems.length}
-              </span>
-            )}
-          </button>
+            {/* Category header — clickable to expand */}
+            <button
+              type="button"
+              onClick={() => setOpenCategory(isOpen ? null : cat.category)}
+              className="w-full flex items-center justify-between px-4 py-3 bg-[#FDFCFA] hover:bg-[#F5F0E8] transition-colors group"
+            >
+              <div className="flex items-center gap-2.5">
+                <span className="text-lg">{cat.emoji}</span>
+                <span className="text-sm font-semibold text-[#1A1A1A]">{cat.category}</span>
+                {selectedCount > 0 && (
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#C5A85C] text-white">
+                    {selectedCount}/{cat.items.length}
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                {/* Select all toggle */}
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); toggleCategory(cat) }}
+                  className={cn(
+                    'text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-lg border transition-all',
+                    allSelected
+                      ? 'bg-[#C5A85C] border-[#C5A85C] text-white'
+                      : 'border-[#E8E2D8] text-[#A8A8A8] hover:border-[#C5A85C] hover:text-[#C5A85C]'
+                  )}
+                >
+                  {allSelected ? '✓ All' : 'All'}
+                </button>
+                <ChevronDown
+                  size={16}
+                  className={cn('text-[#A8A8A8] transition-transform duration-300', isOpen && 'rotate-180')}
+                />
+              </div>
+            </button>
+
+            {/* Item list */}
+            <AnimatePresence initial={false}>
+              {isOpen && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+                  className="overflow-hidden"
+                >
+                  <div className="px-4 py-3 bg-white border-t border-[#F0EDE9] grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {cat.items.map(item => {
+                      const isSel = selectedItems.has(item)
+                      return (
+                        <label
+                          key={item}
+                          className={cn(
+                            'flex items-center gap-2.5 px-3 py-2.5 rounded-lg border cursor-pointer transition-all duration-150',
+                            isSel
+                              ? 'bg-[#FDF8EE] border-[#C5A85C]'
+                              : 'bg-[#FAFAFA] border-[#F0EDE9] hover:border-[#C5A85C]/50'
+                          )}
+                        >
+                          {/* Custom checkbox */}
+                          <div className={cn(
+                            'w-4 h-4 rounded flex items-center justify-center border-2 flex-shrink-0 transition-all',
+                            isSel ? 'bg-[#C5A85C] border-[#C5A85C]' : 'border-[#D8D3CB]'
+                          )}>
+                            {isSel && <Check size={9} strokeWidth={3} className="text-white" />}
+                          </div>
+                          <input
+                            type="checkbox"
+                            className="sr-only"
+                            checked={isSel}
+                            onChange={() => toggleItem(item)}
+                          />
+                          <span className="text-sm text-[#1A1A1A] font-medium">{item}</span>
+                        </label>
+                      )
+                    })}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         )
       })}
     </div>
@@ -185,63 +376,37 @@ function GuestInput({ value, onChange }: { value: number; onChange: (v: number) 
 export function StepDayPlan({
   day, totalDays, plan, vegMenuItems, nonVegMenuItems, onNext, onPrev,
 }: Props) {
-  // Derive initial selected categories from stored ids
-  function idsToCategories(items: MenuItem[], ids: string[]): Set<string> {
-    const all = groupByCategory(items)
-    return new Set(
-      all.filter(g => g.items.some(i => ids.includes(i.id))).map(g => g.category)
-    )
-  }
-
   const [rooms,         setRooms]        = useState(plan.rooms ?? 1)
   const [lunchType,     setLunchType]    = useState<'veg' | 'non-veg'>(plan.lunch.type)
-  const [lunchCats,     setLunchCats]    = useState<Set<string>>(() =>
-    idsToCategories(plan.lunch.type === 'veg' ? vegMenuItems : nonVegMenuItems, plan.lunch.menu_item_ids))
+  const [lunchItems,    setLunchItems]   = useState<Set<string>>(new Set(plan.lunch.menu_item_names ?? []))
   const [lunchGuests,   setLunchGuests]  = useState(plan.lunch.guest_count ?? 50)
   const [dinnerType,    setDinnerType]   = useState<'veg' | 'non-veg'>(plan.dinner.type)
-  const [dinnerCats,    setDinnerCats]   = useState<Set<string>>(() =>
-    idsToCategories(plan.dinner.type === 'veg' ? vegMenuItems : nonVegMenuItems, plan.dinner.menu_item_ids))
+  const [dinnerItems,   setDinnerItems]  = useState<Set<string>>(new Set(plan.dinner.menu_item_names ?? []))
   const [dinnerGuests,  setDinnerGuests] = useState(plan.dinner.guest_count ?? 50)
 
-  // When meal type changes, reset category selection
   function handleLunchTypeChange(type: 'veg' | 'non-veg') {
     setLunchType(type)
-    setLunchCats(new Set())
+    setLunchItems(new Set())
   }
   function handleDinnerTypeChange(type: 'veg' | 'non-veg') {
     setDinnerType(type)
-    setDinnerCats(new Set())
-  }
-
-  function catToIds(items: MenuItem[], cats: Set<string>): { ids: string[]; names: string[] } {
-    const groups = groupByCategory(items)
-    const ids: string[] = []
-    const names: string[] = []
-    for (const { category, items: gItems } of groups) {
-      if (cats.has(category)) {
-        for (const item of gItems) { ids.push(item.id); names.push(item.name) }
-      }
-    }
-    return { ids, names }
+    setDinnerItems(new Set())
   }
 
   function handleSubmit() {
-    const lunchItems = lunchType === 'veg' ? vegMenuItems : nonVegMenuItems
-    const dinnerItems = dinnerType === 'veg' ? vegMenuItems : nonVegMenuItems
-    const lunch  = catToIds(lunchItems, lunchCats)
-    const dinner = catToIds(dinnerItems, dinnerCats)
-
+    const lunchNames  = [...lunchItems]
+    const dinnerNames = [...dinnerItems]
     onNext({
       day,
       rooms,
-      lunch:  { type: lunchType,  menu_item_ids: lunch.ids,  menu_item_names: lunch.names,  guest_count: lunchGuests },
-      dinner: { type: dinnerType, menu_item_ids: dinner.ids, menu_item_names: dinner.names, guest_count: dinnerGuests },
+      lunch:  { type: lunchType,  menu_item_ids: [],  menu_item_names: lunchNames,  guest_count: lunchGuests },
+      dinner: { type: dinnerType, menu_item_ids: [],  menu_item_names: dinnerNames, guest_count: dinnerGuests },
     })
   }
 
   const mealTypeOptions = [
-    { value: 'veg',     label: 'Vegetarian',     icon: <Leaf  size={13} className="text-green-600" /> },
-    { value: 'non-veg', label: 'Non-Vegetarian',  icon: <Flame size={13} className="text-red-500" /> },
+    { value: 'veg',     label: 'Vegetarian',    icon: <Leaf  size={13} className="text-green-600" /> },
+    { value: 'non-veg', label: 'Non-Vegetarian', icon: <Flame size={13} className="text-red-500" /> },
   ]
 
   return (
@@ -318,11 +483,18 @@ export function StepDayPlan({
               </div>
             </div>
             <div>
-              <p className="text-xs font-semibold text-[#737373] mb-2 uppercase tracking-wider">Dishes</p>
-              <CategoryChips
-                items={lunchType === 'veg' ? vegMenuItems : nonVegMenuItems}
-                selected={lunchCats}
-                onChange={setLunchCats}
+              <p className="text-xs font-semibold text-[#737373] mb-3 uppercase tracking-wider">
+                Dishes
+                {lunchItems.size > 0 && (
+                  <span className="ml-2 px-2 py-0.5 rounded-full text-[10px] bg-[#C5A85C] text-white normal-case tracking-normal">
+                    {lunchItems.size} selected
+                  </span>
+                )}
+              </p>
+              <MenuCategoryDropdown
+                mealType={lunchType}
+                selectedItems={lunchItems}
+                onChange={setLunchItems}
               />
             </div>
           </div>
@@ -344,11 +516,18 @@ export function StepDayPlan({
               </div>
             </div>
             <div>
-              <p className="text-xs font-semibold text-[#737373] mb-2 uppercase tracking-wider">Dishes</p>
-              <CategoryChips
-                items={dinnerType === 'veg' ? vegMenuItems : nonVegMenuItems}
-                selected={dinnerCats}
-                onChange={setDinnerCats}
+              <p className="text-xs font-semibold text-[#737373] mb-3 uppercase tracking-wider">
+                Dishes
+                {dinnerItems.size > 0 && (
+                  <span className="ml-2 px-2 py-0.5 rounded-full text-[10px] bg-[#C5A85C] text-white normal-case tracking-normal">
+                    {dinnerItems.size} selected
+                  </span>
+                )}
+              </p>
+              <MenuCategoryDropdown
+                mealType={dinnerType}
+                selectedItems={dinnerItems}
+                onChange={setDinnerItems}
               />
             </div>
           </div>
