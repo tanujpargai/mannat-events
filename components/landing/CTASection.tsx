@@ -67,7 +67,7 @@ export function CTASection({ isLoggedIn }: Props) {
         </p>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-5">
-          <Link href={isLoggedIn ? '/booking' : '/signup'}>
+          <Link href="/booking">
             <button
               className="group relative overflow-hidden rounded-full px-12 py-5 font-semibold text-sm tracking-widest uppercase transition-all duration-300"
               style={{

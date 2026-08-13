@@ -330,44 +330,26 @@ function Section({ title, icon, children }: { title: string; icon: React.ReactNo
 
 // ── Guest count compact input ──
 function GuestInput({ value, onChange }: { value: number; onChange: (v: number) => void }) {
-  const presets = [10, 25, 50, 100, 250, 500]
   return (
-    <div className="flex flex-col gap-3">
-      <div className="flex items-center gap-3">
-        <button
-          type="button"
-          onClick={() => onChange(Math.max(1, value - 1))}
-          className="w-8 h-8 rounded-lg border border-[#E8E2D8] bg-white flex items-center justify-center text-[#737373] hover:border-[#C5A85C] hover:text-[#C5A85C] transition-all text-lg leading-none"
-        >−</button>
-        <input
-          type="number"
-          min={1}
-          max={9999}
-          value={value}
-          onChange={e => onChange(Math.max(1, Number(e.target.value) || 1))}
-          className="w-20 text-center border border-[#E8E2D8] rounded-xl px-2 py-1.5 text-sm font-semibold text-[#1A1A1A] focus:outline-none focus:border-[#C5A85C]"
-        />
-        <button
-          type="button"
-          onClick={() => onChange(value + 1)}
-          className="w-8 h-8 rounded-lg border border-[#E8E2D8] bg-white flex items-center justify-center text-[#737373] hover:border-[#C5A85C] hover:text-[#C5A85C] transition-all text-lg leading-none"
-        >+</button>
-      </div>
-      <div className="flex flex-wrap gap-1.5">
-        {presets.map(p => (
-          <button
-            key={p}
-            type="button"
-            onClick={() => onChange(p)}
-            className={cn(
-              'px-2.5 py-1 rounded-lg text-xs font-semibold border transition-all',
-              value === p
-                ? 'bg-[#C5A85C] border-[#C5A85C] text-white'
-                : 'bg-white border-[#E8E2D8] text-[#737373] hover:border-[#C5A85C]'
-            )}
-          >{p}</button>
-        ))}
-      </div>
+    <div className="flex items-center gap-2">
+      <button
+        type="button"
+        onClick={() => onChange(Math.max(1, value - 1))}
+        className="w-9 h-9 rounded-xl border border-[#E8E2D8] bg-white flex items-center justify-center text-[#737373] hover:border-[#C5A85C] hover:text-[#C5A85C] transition-all text-base font-semibold shadow-xs"
+      >−</button>
+      <input
+        type="number"
+        min={1}
+        max={9999}
+        value={value}
+        onChange={e => onChange(Math.max(1, Number(e.target.value) || 1))}
+        className="w-20 text-center border border-[#E8E2D8] rounded-xl px-3 py-1.5 text-sm font-semibold text-[#1A1A1A] focus:outline-none focus:border-[#C5A85C] bg-white shadow-xs"
+      />
+      <button
+        type="button"
+        onClick={() => onChange(value + 1)}
+        className="w-9 h-9 rounded-xl border border-[#E8E2D8] bg-white flex items-center justify-center text-[#737373] hover:border-[#C5A85C] hover:text-[#C5A85C] transition-all text-base font-semibold shadow-xs"
+      >+</button>
     </div>
   )
 }
@@ -434,36 +416,22 @@ export function StepDayPlan({
 
         {/* ── Rooms ── */}
         <Section title="Rooms" icon={<Bed size={16} />}>
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setRooms(Math.max(1, rooms - 1))}
-                className="w-8 h-8 rounded-lg border border-[#E8E2D8] bg-white flex items-center justify-center text-[#737373] hover:border-[#C5A85C] hover:text-[#C5A85C] transition-all text-lg leading-none"
-              >−</button>
-              <input
-                type="number" min={1} value={rooms}
-                onChange={e => setRooms(Math.max(1, Number(e.target.value) || 1))}
-                className="w-16 text-center border border-[#E8E2D8] rounded-xl px-2 py-1.5 text-sm font-semibold text-[#1A1A1A] focus:outline-none focus:border-[#C5A85C]"
-              />
-              <button
-                type="button"
-                onClick={() => setRooms(rooms + 1)}
-                className="w-8 h-8 rounded-lg border border-[#E8E2D8] bg-white flex items-center justify-center text-[#737373] hover:border-[#C5A85C] hover:text-[#C5A85C] transition-all text-lg leading-none"
-              >+</button>
-            </div>
-            <div className="flex gap-1.5 flex-wrap">
-              {[1, 5, 10, 25, 50].map(p => (
-                <button key={p} type="button" onClick={() => setRooms(p)}
-                  className={cn(
-                    'px-2.5 py-1 rounded-lg text-xs font-semibold border transition-all',
-                    rooms === p
-                      ? 'bg-[#C5A85C] border-[#C5A85C] text-white'
-                      : 'bg-white border-[#E8E2D8] text-[#737373] hover:border-[#C5A85C]'
-                  )}
-                >{p}</button>
-              ))}
-            </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setRooms(Math.max(1, rooms - 1))}
+              className="w-9 h-9 rounded-xl border border-[#E8E2D8] bg-white flex items-center justify-center text-[#737373] hover:border-[#C5A85C] hover:text-[#C5A85C] transition-all text-base font-semibold shadow-xs"
+            >−</button>
+            <input
+              type="number" min={1} value={rooms}
+              onChange={e => setRooms(Math.max(1, Number(e.target.value) || 1))}
+              className="w-20 text-center border border-[#E8E2D8] rounded-xl px-3 py-1.5 text-sm font-semibold text-[#1A1A1A] focus:outline-none focus:border-[#C5A85C] bg-white shadow-xs"
+            />
+            <button
+              type="button"
+              onClick={() => setRooms(rooms + 1)}
+              className="w-9 h-9 rounded-xl border border-[#E8E2D8] bg-white flex items-center justify-center text-[#737373] hover:border-[#C5A85C] hover:text-[#C5A85C] transition-all text-base font-semibold shadow-xs"
+            >+</button>
           </div>
         </Section>
 
