@@ -1,4 +1,4 @@
-﻿import type { Metadata } from 'next'
+import type { Metadata } from 'next'
 import { Suspense } from 'react'
 import { LoginForm } from '@/components/auth/LoginForm'
 import Link from 'next/link'
@@ -34,16 +34,7 @@ export default function LoginPage() {
         <LoginForm />
       </Suspense>
 
-      <p className="mt-6 text-center text-sm" style={{ color: 'rgba(250,243,232,0.4)' }}>
-        Don&apos;t have an account?{' '}
-        <Link
-          href="/signup"
-          className="font-medium transition-colors"
-          style={{ color: '#C9A84C' }}
-        >
-          Create one
-        </Link>
-      </p>
+
     </>
   )
 }
