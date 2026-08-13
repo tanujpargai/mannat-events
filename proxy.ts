@@ -38,7 +38,7 @@ export async function proxy(request: NextRequest) {
   }
 
   // ---- Unauthenticated redirect ----
-  const protectedPaths = ['/dashboard', '/booking', '/admin']
+  const protectedPaths = ['/dashboard', '/admin']
   const isProtected = protectedPaths.some((p) => pathname.startsWith(p))
 
   if (!user && isProtected) {

@@ -22,6 +22,7 @@ import { StepDayPlan }            from './steps/StepDayPlan'
 import { StepWeddingFunctions }  from './steps/StepWeddingFunctions'
 import { StepDecorationTheme }   from './steps/StepDecorationTheme'
 import { StepBaraatStyle }       from './steps/StepBaraatStyle'
+import { StepPhoneVerify }       from './steps/StepPhoneVerify'
 import { StepReview }            from './steps/StepReview'
 
 import { DynamicProgressBar }    from './DynamicProgressBar'
@@ -36,6 +37,7 @@ type StepKind =
   | { kind: 'functions' }
   | { kind: 'decoration' }
   | { kind: 'baraat' }
+  | { kind: 'verify' }
   | { kind: 'review' }
 
 function buildStepList(duration: number): StepKind[] {
@@ -46,6 +48,7 @@ function buildStepList(duration: number): StepKind[] {
   steps.push({ kind: 'functions' })
   steps.push({ kind: 'decoration' })
   steps.push({ kind: 'baraat' })
+  steps.push({ kind: 'verify' })
   steps.push({ kind: 'review' })
   return steps
 }
@@ -57,6 +60,7 @@ function stepLabel(step: StepKind): string {
     case 'functions':          return 'Functions'
     case 'decoration':         return 'Decoration'
     case 'baraat':             return 'Baraat'
+    case 'verify':             return 'Verify'
     case 'review':             return 'Review'
   }
 }
@@ -367,6 +371,14 @@ export function BookingWizard() {
               dispatch({ type: 'SET_BARAAT', style })
               next()
             }}
+            onPrev={prev}
+          />
+        )
+
+      case 'verify':
+        return (
+          <StepPhoneVerify
+            onVerified={() => next()}
             onPrev={prev}
           />
         )
