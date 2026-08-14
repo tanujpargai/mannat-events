@@ -39,6 +39,13 @@ const DINNER_FUNCTIONS = [
   'Other',
 ]
 
+const MENU_PACKAGES = [
+  { id: 'silver',   name: 'Silver Banquet Menu' },
+  { id: 'gold',     name: 'Gold Royal Feast Menu' },
+  { id: 'diamond',  name: 'Diamond Grand Buffet Menu' },
+  { id: 'imperial', name: 'Imperial Taj Special Menu' },
+]
+
 const MOCK_MENU = {
   veg: [
     { category: 'Starters', emoji: '🥗', items: ['Paneer Tikka', 'Veg Spring Rolls', 'Dahi Puri Chaat', 'Corn Palak Tikki', 'Hara Bhara Kebab'] },
@@ -72,7 +79,8 @@ export function StepDayPlan({
   // 2.3 Food Preference
   const [foodPreference, setFoodPreference] = useState<FoodPreference>(plan.food_preference ?? 'veg')
   
-  // 2.4 Menu Selection Popup state
+  // 2.4 Menu Tier Selection & Popup state
+  const [menuPackage, setMenuPackage] = useState<string>(plan.lunch.menu_item_names?.[0] ?? MENU_PACKAGES[1].name)
   const [isMenuPopupOpen, setIsMenuPopupOpen] = useState(false)
   
   // 2.5 Lunch Function & 2.6 Dinner Function
@@ -87,8 +95,8 @@ export function StepDayPlan({
       food_preference: foodPreference,
       lunch_function: lunchFunction,
       dinner_function: dinnerFunction,
-      lunch:  { type: foodPreference === 'non-veg' ? 'non-veg' : 'veg', menu_item_ids: [], menu_item_names: [lunchFunction], guest_count: guestCount },
-      dinner: { type: foodPreference === 'non-veg' ? 'non-veg' : 'veg', menu_item_ids: [], menu_item_names: [dinnerFunction], guest_count: guestCount },
+      lunch:  { type: foodPreference === 'non-veg' ? 'non-veg' : 'veg', menu_item_ids: [], menu_item_names: [menuPackage], guest_count: guestCount },
+      dinner: { type: foodPreference === 'non-veg' ? 'non-veg' : 'veg', menu_item_ids: [], menu_item_names: [menuPackage], guest_count: guestCount },
     })
   }
 
@@ -118,7 +126,7 @@ export function StepDayPlan({
 
       <h2 className="text-headline mb-1">Day {day} Planning</h2>
       <p className="text-body text-[#737373] mb-8">
-        Specify your rooms, guests, food preferences and event functions for Day {day}.
+        Specify your rooms, guests, food preferences, menu tier, and event functions for Day {day}.
       </p>
 
       <div className="space-y-6">
@@ -164,7 +172,9 @@ export function StepDayPlan({
 
         {/* ── 2.3 Food Preference & 2.4 Menu Selection ── */}
         <div className="rounded-2xl border border-[#E8E2D8] bg-white p-5 space-y-5">
-          <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#F0EDE9] pb-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 border-b border-[#F0EDE9] pb-5">
+            
+            {/* 2.3 Food Preference */}
             <div>
               <label className="text-xs font-bold uppercase tracking-wider text-[#737373] flex items-center gap-2 mb-2">
                 <UtensilsCrossed size={15} className="text-[#C5A85C]" />
@@ -177,7 +187,7 @@ export function StepDayPlan({
                     type="button"
                     onClick={() => setFoodPreference(opt.value)}
                     className={cn(
-                      'flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold border transition-all duration-200',
+                      'flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-semibold border transition-all duration-200',
                       foodPreference === opt.value
                         ? 'bg-[#C5A85C] border-[#C5A85C] text-white shadow-sm'
                         : 'bg-white border-[#E8E2D8] text-[#737373] hover:border-[#C5A85C]'
@@ -190,18 +200,36 @@ export function StepDayPlan({
               </div>
             </div>
 
-            {/* 2.4 View Menu Button */}
+            {/* 2.4 Menu Category Dropdown & View Menu Button */}
             <div>
-              <p className="text-xs font-bold uppercase tracking-wider text-[#737373] mb-2">2.4 Menu Selection</p>
-              <Button
-                type="button"
-                variant="gold"
-                onClick={() => setIsMenuPopupOpen(true)}
-                className="flex items-center gap-2 shadow-xs"
-              >
-                <UtensilsCrossed size={14} /> View Menu
-              </Button>
+              <label className="text-xs font-bold uppercase tracking-wider text-[#737373] flex items-center gap-2 mb-2">
+                2.4 Menu Category &amp; Items
+              </label>
+              <div className="flex items-center gap-2">
+                <select
+                  value={menuPackage}
+                  onChange={e => setMenuPackage(e.target.value)}
+                  className="flex-1 border border-[#E8E2D8] rounded-xl px-4 py-2.5 text-xs font-semibold text-[#1A1A1A] focus:outline-none focus:border-[#C5A85C] bg-white cursor-pointer shadow-xs"
+                >
+                  {MENU_PACKAGES.map(pkg => (
+                    <option key={pkg.id} value={pkg.name}>
+                      {pkg.name}
+                    </option>
+                  ))}
+                </select>
+
+                <Button
+                  type="button"
+                  variant="gold"
+                  size="md"
+                  onClick={() => setIsMenuPopupOpen(true)}
+                  className="flex items-center gap-1.5 shrink-0 shadow-xs"
+                >
+                  <UtensilsCrossed size={13} /> View Menu
+                </Button>
+              </div>
             </div>
+
           </div>
 
           {/* Menu Customization Note */}
@@ -273,7 +301,7 @@ export function StepDayPlan({
                 <div className="flex items-center gap-2">
                   <UtensilsCrossed size={18} className="text-[#C5A85C]" />
                   <h3 className="text-lg font-semibold text-[#1A1A1A]">
-                    Mannat Events Menu — <span className="capitalize text-[#C5A85C]">{foodPreference}</span>
+                    {menuPackage} — <span className="capitalize text-[#C5A85C]">{foodPreference}</span>
                   </h3>
                 </div>
                 <button
