@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Building2, Star, Check, Sparkles, MapPin, ArrowRight, ShieldCheck } from 'lucide-react'
+import { Building2, Star, Check, MapPin, ArrowRight, ShieldCheck, Info } from 'lucide-react'
 import { BookingFormData, HotelComparisonItem } from '@/lib/types'
 import { Button } from '@/components/ui/Button'
 import { cn } from '@/lib/utils/cn'
@@ -14,18 +14,18 @@ interface Props {
   isSubmitting: boolean
 }
 
-export const MOCK_HOTEL_COMPARISONS: HotelComparisonItem[] = [
+// Hotel base definitions
+const HOTEL_DEFINITIONS = [
   {
     id: 'taj-hotel',
     name: 'Taj Hotel & Convention Centre',
     star_rating: 5,
     image_url: '/venue_palace.jpg',
     location: 'Taj East Gate Road, Agra',
-    package_price: 2480000,
-    price_display: '₹24,80,000',
     room_category: 'Deluxe Taj Facing Rooms',
     venue_capacity: 'Up to 500 Guests',
-    catering_details: 'Custom 5-star Buffet (Veg/Non-Veg) with live stations',
+    roomRate: 12000,
+    multiplier: 1.3,
     amenities: ['Infiniti Rooftop Pool', 'Taj Mahal View Terrace', 'Spa & Wellness', 'Valet Parking'],
     inclusions: ['Breakfast included', 'Stage & Sound Setup', 'Event Manager Support'],
     exclusions: ['Alcohol (chargeable on actuals)', 'External Decorator Fee'],
@@ -37,11 +37,10 @@ export const MOCK_HOTEL_COMPARISONS: HotelComparisonItem[] = [
     star_rating: 5,
     image_url: '/royal.jpg',
     location: 'Fatehabad Road, Agra',
-    package_price: 2150000,
-    price_display: '₹21,50,000',
     room_category: 'Mughal Superior Rooms',
     venue_capacity: 'Up to 600 Guests',
-    catering_details: 'Signature Royal Awadhi & International Cuisine',
+    roomRate: 9500,
+    multiplier: 1.12,
     amenities: ['Kaya Kalp Spa', '35 Acres Mughal Gardens', 'Multiple Lawns', 'Helipad Access'],
     inclusions: ['Breakfast included', 'Garden Lighting', 'Bridal Suite Upgrade'],
     exclusions: ['Liquor License Fee'],
@@ -53,11 +52,10 @@ export const MOCK_HOTEL_COMPARISONS: HotelComparisonItem[] = [
     star_rating: 5,
     image_url: '/wedding_feast.jpg',
     location: 'Fatehabad Road, Agra',
-    package_price: 1690000,
-    price_display: '₹16,90,000',
     room_category: 'Executive Deluxe Rooms',
     venue_capacity: 'Up to 350 Guests',
-    catering_details: 'Multi-Cuisine Buffet with Mocktail Bar',
+    roomRate: 7200,
+    multiplier: 0.92,
     amenities: ['Outdoor Pool', 'Grand Ballroom', 'Fitness Centre', '24h Concierge'],
     inclusions: ['Breakfast included', 'Basic AV Setup', 'Complimentary Room Upgrade'],
     exclusions: ['Late Night DJ Clearance'],
@@ -65,20 +63,92 @@ export const MOCK_HOTEL_COMPARISONS: HotelComparisonItem[] = [
   },
 ]
 
+// Price calculation helpers
+const MENU_RATES: Record<string, number> = {
+  'Silver Banquet Menu': 1400,
+  'Gold Royal Feast Menu': 2100,
+  'Diamond Grand Buffet Menu': 2800,
+  'Imperial Taj Special Menu': 3600,
+}
+
+const DECOR_RATES: Record<string, number> = {
+  silver: 280000,
+  gold: 480000,
+  platinum: 750000,
+  luxury: 1100000,
+}
+
 export function StepHotelComparison({ data, onSelectHotel, onPrev, isSubmitting }: Props) {
+  const duration = data.day_plans?.length ?? 1
+  const decorTier = data.decoration_package ?? 'gold'
+  const decorBasePrice = DECOR_RATES[decorTier] ?? 480000
+
+  // Calculate dynamic package prices for each hotel based on user choices
+  const hotelsWithCalculatedPrices: HotelComparisonItem[] = HOTEL_DEFINITIONS.map(h => {
+    let totalRooms = 0
+    let totalCatering = 0
+
+    if (data.day_plans && data.day_plans.length > 0) {
+      for (const p of data.day_plans) {
+        totalRooms += (p.rooms ?? 1)
+        
+        const lunchGuests = p.lunch?.guest_count ?? p.guest_count ?? 50
+        const dinnerGuests = p.dinner?.guest_count ?? p.guest_count ?? 50
+        
+        const lunchPkg = p.lunch?.menu_item_names?.[0] ?? 'Gold Royal Feast Menu'
+        const dinnerPkg = p.dinner?.menu_item_names?.[0] ?? 'Gold Royal Feast Menu'
+        
+        const lunchPlateRate = MENU_RATES[lunchPkg] ?? 2100
+        const dinnerPlateRate = MENU_RATES[dinnerPkg] ?? 2400
+        
+        totalCatering += (lunchGuests * lunchPlateRate) + (dinnerGuests * dinnerPlateRate)
+      }
+    } else {
+      totalRooms = 10 * duration
+      totalCatering = 150 * 2000 * duration
+    }
+
+    const roomCost = totalRooms * h.roomRate
+    const cateringCost = totalCatering * h.multiplier
+    const decorCost = decorBasePrice * (h.multiplier * 0.95)
+
+    const rawTotal = Math.round(roomCost + cateringCost + decorCost)
+    
+    // Round to nearest thousand for clean pricing display
+    const finalPrice = Math.ceil(rawTotal / 5000) * 5000
+    const priceDisplay = `₹${finalPrice.toLocaleString('en-IN')}`
+
+    return {
+      id: h.id,
+      name: h.name,
+      star_rating: h.star_rating,
+      image_url: h.image_url,
+      location: h.location,
+      package_price: finalPrice,
+      price_display: priceDisplay,
+      room_category: h.room_category,
+      venue_capacity: h.venue_capacity,
+      catering_details: `${duration}-Day Customized Catering (Lunch & Dinner)`,
+      amenities: h.amenities,
+      inclusions: h.inclusions,
+      exclusions: h.exclusions,
+      tax_info: h.tax_info,
+    }
+  })
+
   const [selectedHotelId, setSelectedHotelId] = useState<string>(
-    data.selected_hotel?.id ?? MOCK_HOTEL_COMPARISONS[0].id
+    data.selected_hotel?.id ?? hotelsWithCalculatedPrices[0].id
   )
 
-  const selectedHotel = MOCK_HOTEL_COMPARISONS.find(h => h.id === selectedHotelId) || MOCK_HOTEL_COMPARISONS[0]
+  const selectedHotel = hotelsWithCalculatedPrices.find(h => h.id === selectedHotelId) || hotelsWithCalculatedPrices[0]
 
   function handleSubmitEnquiry() {
     onSelectHotel(selectedHotel)
   }
 
-  const duration = data.day_plans?.length ?? 1
-  const roomsCount = data.day_plans?.[0]?.rooms ?? 10
-  const guestCount = data.day_plans?.[0]?.guest_count ?? 150
+  const firstDay = data.day_plans?.[0]
+  const totalRoomsPerDay = firstDay?.rooms ?? 10
+  const avgGuests = firstDay ? Math.max(firstDay.lunch?.guest_count ?? 50, firstDay.dinner?.guest_count ?? 50) : 100
 
   return (
     <motion.div
@@ -91,13 +161,13 @@ export function StepHotelComparison({ data, onSelectHotel, onPrev, isSubmitting 
       <div className="mb-6">
         <span className="px-3 py-1 rounded-full bg-[#F5EDD6] border border-[#E8D9A8] text-xs font-bold tracking-widest text-[#A08040] uppercase flex items-center gap-1.5 w-fit">
           <ShieldCheck size={14} className="text-[#C5A85C]" />
-          Verified Quote &amp; Comparison
+          Verified Quote &amp; Dynamic Comparison
         </span>
       </div>
 
       <h2 className="text-headline mb-1">Hotel Package Comparison</h2>
       <p className="text-body text-[#737373] mb-8">
-        We have calculated your customized package across top Agra venues. Compare pricing and inclusions side-by-side.
+        We have calculated your package price across Agra&apos;s luxury hotels based on your selected menus, rooms, guest counts &amp; decor package.
       </p>
 
       {/* Summary Pill */}
@@ -107,19 +177,19 @@ export function StepHotelComparison({ data, onSelectHotel, onPrev, isSubmitting 
           <span>Duration: <strong>{duration} Days</strong></span>
         </div>
         <div>
-          <span>Rooms: <strong>{roomsCount} Rooms/day</strong></span>
+          <span>Rooms: <strong>{totalRoomsPerDay} Rooms/day</strong></span>
         </div>
         <div>
-          <span>Guests: <strong>{guestCount} Guests</strong></span>
+          <span>Guests: <strong>~{avgGuests} Guests/event</strong></span>
         </div>
         <div>
-          <span>Decor: <strong className="capitalize text-[#C5A85C]">{data.decoration_package ?? 'Gold'} Tier</strong></span>
+          <span>Decor: <strong className="capitalize text-[#C5A85C]">{decorTier} Tier</strong></span>
         </div>
       </div>
 
       {/* Side-by-Side Comparison Cards */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-        {MOCK_HOTEL_COMPARISONS.map((hotel) => {
+        {hotelsWithCalculatedPrices.map((hotel) => {
           const isSel = selectedHotelId === hotel.id
           return (
             <div
@@ -156,9 +226,9 @@ export function StepHotelComparison({ data, onSelectHotel, onPrev, isSubmitting 
                 </div>
               </div>
 
-              {/* Price Header */}
+              {/* Dynamic Price Header */}
               <div className="p-5 border-b border-[#F0EDE9] bg-[#FDFCFA] text-center">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-[#737373]">Estimated Package Price</span>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-[#737373]">Calculated Package Price</span>
                 <p className="text-2xl font-bold text-[#1A1A1A] mt-0.5" style={{ color: '#C5A85C' }}>
                   {hotel.price_display}
                 </p>
@@ -178,7 +248,7 @@ export function StepHotelComparison({ data, onSelectHotel, onPrev, isSubmitting 
                 </div>
 
                 <div>
-                  <span className="font-bold text-[#1A1A1A] block">Catering</span>
+                  <span className="font-bold text-[#1A1A1A] block">Catering Inclusions</span>
                   <span className="text-[#737373]">{hotel.catering_details}</span>
                 </div>
 
