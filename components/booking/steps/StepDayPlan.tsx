@@ -73,8 +73,9 @@ export function StepDayPlan({
   // 2.1 Room Requirement
   const [rooms, setRooms] = useState<number>(plan.rooms ?? 1)
   
-  // 2.2 Guest Details
-  const [guestCount, setGuestCount] = useState<number>(plan.guest_count ?? 50)
+  // Separate Guest Counts for Lunch & Dinner
+  const [lunchGuestCount, setLunchGuestCount] = useState<number>(plan.lunch.guest_count ?? 50)
+  const [dinnerGuestCount, setDinnerGuestCount] = useState<number>(plan.dinner.guest_count ?? 50)
   
   // Separate Food Preferences for Lunch & Dinner
   const [lunchFoodPref, setLunchFoodPref] = useState<FoodPreference>(plan.food_preference ?? 'veg')
@@ -95,12 +96,12 @@ export function StepDayPlan({
     onNext({
       day,
       rooms,
-      guest_count: guestCount,
+      guest_count: Math.max(lunchGuestCount, dinnerGuestCount),
       food_preference: lunchFoodPref,
       lunch_function: lunchFunction,
       dinner_function: dinnerFunction,
-      lunch:  { type: lunchFoodPref === 'non-veg' ? 'non-veg' : 'veg', menu_item_ids: [], menu_item_names: [lunchMenuPackage], guest_count: guestCount },
-      dinner: { type: dinnerFoodPref === 'non-veg' ? 'non-veg' : 'veg', menu_item_ids: [], menu_item_names: [dinnerMenuPackage], guest_count: guestCount },
+      lunch:  { type: lunchFoodPref === 'non-veg' ? 'non-veg' : 'veg', menu_item_ids: [], menu_item_names: [lunchMenuPackage], guest_count: lunchGuestCount },
+      dinner: { type: dinnerFoodPref === 'non-veg' ? 'non-veg' : 'veg', menu_item_ids: [], menu_item_names: [dinnerMenuPackage], guest_count: dinnerGuestCount },
     })
   }
 
@@ -130,58 +131,36 @@ export function StepDayPlan({
 
       <h2 className="text-headline mb-1">Day {day} Planning</h2>
       <p className="text-body text-[#737373] mb-8">
-        Specify your rooms, guests, and separate food &amp; menu configurations for Lunch and Dinner.
+        Specify your room requirements, plus separate guest counts, food preferences, and event functions for Lunch and Dinner.
       </p>
 
       <div className="space-y-6">
 
-        {/* ── 2.1 Room Requirement & 2.2 Guest Details (Clean Grid) ── */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          
-          {/* 2.1 Room Requirement */}
-          <div className="rounded-2xl border border-[#E8E2D8] bg-white p-5 space-y-2">
-            <label className="text-xs font-bold uppercase tracking-wider text-[#737373] flex items-center gap-2">
-              <Bed size={15} className="text-[#C5A85C]" />
-              2.1 Number of Rooms Required
-            </label>
-            <input
-              type="number"
-              min={1}
-              max={999}
-              value={rooms}
-              onChange={e => setRooms(Math.max(1, Number(e.target.value) || 1))}
-              className="w-full border border-[#E8E2D8] rounded-xl px-4 py-3 text-base font-semibold text-[#1A1A1A] focus:outline-none focus:border-[#C5A85C] bg-white shadow-xs"
-              placeholder="e.g. 25"
-            />
-          </div>
-
-          {/* 2.2 Guest Details */}
-          <div className="rounded-2xl border border-[#E8E2D8] bg-white p-5 space-y-2">
-            <label className="text-xs font-bold uppercase tracking-wider text-[#737373] flex items-center gap-2">
-              <Users size={15} className="text-[#C5A85C]" />
-              2.2 Total Guest Count
-            </label>
-            <input
-              type="number"
-              min={1}
-              max={9999}
-              value={guestCount}
-              onChange={e => setGuestCount(Math.max(1, Number(e.target.value) || 1))}
-              className="w-full border border-[#E8E2D8] rounded-xl px-4 py-3 text-base font-semibold text-[#1A1A1A] focus:outline-none focus:border-[#C5A85C] bg-white shadow-xs"
-              placeholder="e.g. 200"
-            />
-          </div>
-
+        {/* ── 2.1 Room Requirement ── */}
+        <div className="rounded-2xl border border-[#E8E2D8] bg-white p-5 space-y-2">
+          <label className="text-xs font-bold uppercase tracking-wider text-[#737373] flex items-center gap-2">
+            <Bed size={15} className="text-[#C5A85C]" />
+            2.1 Number of Rooms Required
+          </label>
+          <input
+            type="number"
+            min={1}
+            max={999}
+            value={rooms}
+            onChange={e => setRooms(Math.max(1, Number(e.target.value) || 1))}
+            className="w-full max-w-xs border border-[#E8E2D8] rounded-xl px-4 py-3 text-base font-semibold text-[#1A1A1A] focus:outline-none focus:border-[#C5A85C] bg-white shadow-xs"
+            placeholder="e.g. 25"
+          />
         </div>
 
-        {/* ── 2.3 LUNCH CONFIGURATION (Function + Food Pref + Menu Package + View Menu) ── */}
+        {/* ── 2.2 LUNCH CONFIGURATION (Function + Guest Count + Food Pref + Menu Package + View Menu) ── */}
         <div className="rounded-2xl border border-[#E8E2D8] bg-white p-5 space-y-5">
           <div className="flex items-center gap-2 border-b border-[#F0EDE9] pb-3">
             <Leaf size={16} className="text-green-600" />
-            <h3 className="text-sm font-bold uppercase tracking-wider text-[#1A1A1A]">2.3 Lunch Configuration</h3>
+            <h3 className="text-sm font-bold uppercase tracking-wider text-[#1A1A1A]">2.2 Lunch Configuration</h3>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Lunch Function */}
             <div>
               <label className="text-xs font-semibold uppercase tracking-wider text-[#737373] flex items-center gap-1.5 mb-2">
@@ -190,7 +169,7 @@ export function StepDayPlan({
               <select
                 value={lunchFunction}
                 onChange={e => setLunchFunction(e.target.value)}
-                className="w-full border border-[#E8E2D8] rounded-xl px-4 py-2.5 text-xs font-semibold text-[#1A1A1A] focus:outline-none focus:border-[#C5A85C] bg-white cursor-pointer shadow-xs"
+                className="w-full border border-[#E8E2D8] rounded-xl px-3 py-2.5 text-xs font-semibold text-[#1A1A1A] focus:outline-none focus:border-[#C5A85C] bg-white cursor-pointer shadow-xs"
               >
                 {LUNCH_FUNCTIONS.map(fn => (
                   <option key={fn} value={fn}>{fn}</option>
@@ -198,19 +177,35 @@ export function StepDayPlan({
               </select>
             </div>
 
+            {/* Lunch Guest Count */}
+            <div>
+              <label className="text-xs font-semibold uppercase tracking-wider text-[#737373] flex items-center gap-1.5 mb-2">
+                <Users size={13} className="text-[#C5A85C]" /> Lunch Guest Count
+              </label>
+              <input
+                type="number"
+                min={1}
+                max={9999}
+                value={lunchGuestCount}
+                onChange={e => setLunchGuestCount(Math.max(1, Number(e.target.value) || 1))}
+                className="w-full border border-[#E8E2D8] rounded-xl px-3 py-2 text-xs font-semibold text-[#1A1A1A] focus:outline-none focus:border-[#C5A85C] bg-white shadow-xs"
+                placeholder="e.g. 150"
+              />
+            </div>
+
             {/* Lunch Food Preference */}
             <div>
               <label className="text-xs font-semibold uppercase tracking-wider text-[#737373] flex items-center gap-1.5 mb-2">
                 <UtensilsCrossed size={13} className="text-[#C5A85C]" /> Lunch Food Preference
               </label>
-              <div className="flex gap-2">
+              <div className="flex gap-1.5">
                 {foodPrefOptions.map(opt => (
                   <button
                     key={opt.value}
                     type="button"
                     onClick={() => setLunchFoodPref(opt.value)}
                     className={cn(
-                      'flex items-center gap-1 px-3 py-2 rounded-xl text-xs font-semibold border transition-all duration-200',
+                      'flex items-center gap-1 px-2.5 py-2 rounded-xl text-xs font-semibold border transition-all duration-200 flex-1 justify-center',
                       lunchFoodPref === opt.value
                         ? 'bg-[#C5A85C] border-[#C5A85C] text-white shadow-sm'
                         : 'bg-white border-[#E8E2D8] text-[#737373] hover:border-[#C5A85C]'
@@ -227,7 +222,7 @@ export function StepDayPlan({
           {/* Lunch Menu Category & View Menu Button */}
           <div className="pt-2 border-t border-[#F0EDE9]">
             <label className="text-xs font-semibold uppercase tracking-wider text-[#737373] block mb-2">
-              Lunch Menu Category &amp; Details
+              Lunch Menu Package &amp; Items
             </label>
             <div className="flex items-center gap-2">
               <select
@@ -253,14 +248,14 @@ export function StepDayPlan({
           </div>
         </div>
 
-        {/* ── 2.4 DINNER CONFIGURATION (Function + Food Pref + Menu Package + View Menu) ── */}
+        {/* ── 2.3 DINNER CONFIGURATION (Function + Guest Count + Food Pref + Menu Package + View Menu) ── */}
         <div className="rounded-2xl border border-[#E8E2D8] bg-white p-5 space-y-5">
           <div className="flex items-center gap-2 border-b border-[#F0EDE9] pb-3">
             <Flame size={16} className="text-red-500" />
-            <h3 className="text-sm font-bold uppercase tracking-wider text-[#1A1A1A]">2.4 Dinner Configuration</h3>
+            <h3 className="text-sm font-bold uppercase tracking-wider text-[#1A1A1A]">2.3 Dinner Configuration</h3>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Dinner Function */}
             <div>
               <label className="text-xs font-semibold uppercase tracking-wider text-[#737373] flex items-center gap-1.5 mb-2">
@@ -269,7 +264,7 @@ export function StepDayPlan({
               <select
                 value={dinnerFunction}
                 onChange={e => setDinnerFunction(e.target.value)}
-                className="w-full border border-[#E8E2D8] rounded-xl px-4 py-2.5 text-xs font-semibold text-[#1A1A1A] focus:outline-none focus:border-[#C5A85C] bg-white cursor-pointer shadow-xs"
+                className="w-full border border-[#E8E2D8] rounded-xl px-3 py-2.5 text-xs font-semibold text-[#1A1A1A] focus:outline-none focus:border-[#C5A85C] bg-white cursor-pointer shadow-xs"
               >
                 {DINNER_FUNCTIONS.map(fn => (
                   <option key={fn} value={fn}>{fn}</option>
@@ -277,19 +272,35 @@ export function StepDayPlan({
               </select>
             </div>
 
+            {/* Dinner Guest Count */}
+            <div>
+              <label className="text-xs font-semibold uppercase tracking-wider text-[#737373] flex items-center gap-1.5 mb-2">
+                <Users size={13} className="text-[#C5A85C]" /> Dinner Guest Count
+              </label>
+              <input
+                type="number"
+                min={1}
+                max={9999}
+                value={dinnerGuestCount}
+                onChange={e => setDinnerGuestCount(Math.max(1, Number(e.target.value) || 1))}
+                className="w-full border border-[#E8E2D8] rounded-xl px-3 py-2 text-xs font-semibold text-[#1A1A1A] focus:outline-none focus:border-[#C5A85C] bg-white shadow-xs"
+                placeholder="e.g. 250"
+              />
+            </div>
+
             {/* Dinner Food Preference */}
             <div>
               <label className="text-xs font-semibold uppercase tracking-wider text-[#737373] flex items-center gap-1.5 mb-2">
                 <UtensilsCrossed size={13} className="text-[#C5A85C]" /> Dinner Food Preference
               </label>
-              <div className="flex gap-2">
+              <div className="flex gap-1.5">
                 {foodPrefOptions.map(opt => (
                   <button
                     key={opt.value}
                     type="button"
                     onClick={() => setDinnerFoodPref(opt.value)}
                     className={cn(
-                      'flex items-center gap-1 px-3 py-2 rounded-xl text-xs font-semibold border transition-all duration-200',
+                      'flex items-center gap-1 px-2.5 py-2 rounded-xl text-xs font-semibold border transition-all duration-200 flex-1 justify-center',
                       dinnerFoodPref === opt.value
                         ? 'bg-[#C5A85C] border-[#C5A85C] text-white shadow-sm'
                         : 'bg-white border-[#E8E2D8] text-[#737373] hover:border-[#C5A85C]'
@@ -306,7 +317,7 @@ export function StepDayPlan({
           {/* Dinner Menu Category & View Menu Button */}
           <div className="pt-2 border-t border-[#F0EDE9]">
             <label className="text-xs font-semibold uppercase tracking-wider text-[#737373] block mb-2">
-              Dinner Menu Category &amp; Details
+              Dinner Menu Package &amp; Items
             </label>
             <div className="flex items-center gap-2">
               <select
