@@ -79,9 +79,12 @@ export function StepDayPlan({
   // 2.3 Food Preference
   const [foodPreference, setFoodPreference] = useState<FoodPreference>(plan.food_preference ?? 'veg')
   
-  // 2.4 Menu Tier Selection & Popup state
-  const [menuPackage, setMenuPackage] = useState<string>(plan.lunch.menu_item_names?.[0] ?? MENU_PACKAGES[1].name)
-  const [isMenuPopupOpen, setIsMenuPopupOpen] = useState(false)
+  // 2.4 Separate Menu Selections for Lunch & Dinner
+  const [lunchMenuPackage, setLunchMenuPackage] = useState<string>(plan.lunch.menu_item_names?.[0] ?? MENU_PACKAGES[1].name)
+  const [dinnerMenuPackage, setDinnerMenuPackage] = useState<string>(plan.dinner.menu_item_names?.[0] ?? MENU_PACKAGES[2].name)
+  
+  // View Menu Popup State
+  const [popupMenuType, setPopupMenuType] = useState<'lunch' | 'dinner' | null>(null)
   
   // 2.5 Lunch Function & 2.6 Dinner Function
   const [lunchFunction, setLunchFunction] = useState<string>(plan.lunch_function ?? 'Welcome Lunch')
@@ -95,8 +98,8 @@ export function StepDayPlan({
       food_preference: foodPreference,
       lunch_function: lunchFunction,
       dinner_function: dinnerFunction,
-      lunch:  { type: foodPreference === 'non-veg' ? 'non-veg' : 'veg', menu_item_ids: [], menu_item_names: [menuPackage], guest_count: guestCount },
-      dinner: { type: foodPreference === 'non-veg' ? 'non-veg' : 'veg', menu_item_ids: [], menu_item_names: [menuPackage], guest_count: guestCount },
+      lunch:  { type: foodPreference === 'non-veg' ? 'non-veg' : 'veg', menu_item_ids: [], menu_item_names: [lunchMenuPackage], guest_count: guestCount },
+      dinner: { type: foodPreference === 'non-veg' ? 'non-veg' : 'veg', menu_item_ids: [], menu_item_names: [dinnerMenuPackage], guest_count: guestCount },
     })
   }
 
@@ -126,7 +129,7 @@ export function StepDayPlan({
 
       <h2 className="text-headline mb-1">Day {day} Planning</h2>
       <p className="text-body text-[#737373] mb-8">
-        Specify your rooms, guests, food preferences, menu tier, and event functions for Day {day}.
+        Specify your rooms, guests, food preferences, separate lunch &amp; dinner menus, and event functions for Day {day}.
       </p>
 
       <div className="space-y-6">
@@ -170,125 +173,143 @@ export function StepDayPlan({
 
         </div>
 
-        {/* ── 2.3 Food Preference & 2.4 Menu Selection ── */}
-        <div className="rounded-2xl border border-[#E8E2D8] bg-white p-5 space-y-5">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 border-b border-[#F0EDE9] pb-5">
-            
-            {/* 2.3 Food Preference */}
+        {/* ── 2.3 Food Preference ── */}
+        <div className="rounded-2xl border border-[#E8E2D8] bg-white p-5 space-y-3">
+          <label className="text-xs font-bold uppercase tracking-wider text-[#737373] flex items-center gap-2">
+            <UtensilsCrossed size={15} className="text-[#C5A85C]" />
+            2.3 Food Preference
+          </label>
+          <div className="flex gap-2">
+            {foodPrefOptions.map(opt => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => setFoodPreference(opt.value)}
+                className={cn(
+                  'flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-semibold border transition-all duration-200',
+                  foodPreference === opt.value
+                    ? 'bg-[#C5A85C] border-[#C5A85C] text-white shadow-sm'
+                    : 'bg-white border-[#E8E2D8] text-[#737373] hover:border-[#C5A85C]'
+                )}
+              >
+                {opt.icon}
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* ── 2.4 & 2.5 LUNCH: Function & Separate Menu Selection ── */}
+        <div className="rounded-2xl border border-[#E8E2D8] bg-white p-5 space-y-4">
+          <div className="flex items-center gap-2 border-b border-[#F0EDE9] pb-3">
+            <Leaf size={16} className="text-green-600" />
+            <h3 className="text-sm font-bold uppercase tracking-wider text-[#1A1A1A]">Lunch Configuration</h3>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Lunch Function */}
             <div>
-              <label className="text-xs font-bold uppercase tracking-wider text-[#737373] flex items-center gap-2 mb-2">
-                <UtensilsCrossed size={15} className="text-[#C5A85C]" />
-                2.3 Food Preference
+              <label className="text-xs font-semibold uppercase tracking-wider text-[#737373] flex items-center gap-1.5 mb-2">
+                <Calendar size={13} className="text-[#C5A85C]" /> Lunch Function
               </label>
-              <div className="flex gap-2">
-                {foodPrefOptions.map(opt => (
-                  <button
-                    key={opt.value}
-                    type="button"
-                    onClick={() => setFoodPreference(opt.value)}
-                    className={cn(
-                      'flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-semibold border transition-all duration-200',
-                      foodPreference === opt.value
-                        ? 'bg-[#C5A85C] border-[#C5A85C] text-white shadow-sm'
-                        : 'bg-white border-[#E8E2D8] text-[#737373] hover:border-[#C5A85C]'
-                    )}
-                  >
-                    {opt.icon}
-                    {opt.label}
-                  </button>
+              <select
+                value={lunchFunction}
+                onChange={e => setLunchFunction(e.target.value)}
+                className="w-full border border-[#E8E2D8] rounded-xl px-4 py-2.5 text-xs font-semibold text-[#1A1A1A] focus:outline-none focus:border-[#C5A85C] bg-white cursor-pointer shadow-xs"
+              >
+                {LUNCH_FUNCTIONS.map(fn => (
+                  <option key={fn} value={fn}>{fn}</option>
                 ))}
-              </div>
+              </select>
             </div>
 
-            {/* 2.4 Menu Category Dropdown & View Menu Button */}
+            {/* Lunch Menu Category */}
             <div>
-              <label className="text-xs font-bold uppercase tracking-wider text-[#737373] flex items-center gap-2 mb-2">
-                2.4 Menu Category &amp; Items
+              <label className="text-xs font-semibold uppercase tracking-wider text-[#737373] flex items-center gap-1.5 mb-2">
+                <UtensilsCrossed size={13} className="text-[#C5A85C]" /> Lunch Menu Package
               </label>
-              <div className="flex items-center gap-2">
+              <div className="flex gap-2">
                 <select
-                  value={menuPackage}
-                  onChange={e => setMenuPackage(e.target.value)}
-                  className="flex-1 border border-[#E8E2D8] rounded-xl px-4 py-2.5 text-xs font-semibold text-[#1A1A1A] focus:outline-none focus:border-[#C5A85C] bg-white cursor-pointer shadow-xs"
+                  value={lunchMenuPackage}
+                  onChange={e => setLunchMenuPackage(e.target.value)}
+                  className="flex-1 border border-[#E8E2D8] rounded-xl px-3 py-2.5 text-xs font-semibold text-[#1A1A1A] focus:outline-none focus:border-[#C5A85C] bg-white cursor-pointer shadow-xs"
                 >
                   {MENU_PACKAGES.map(pkg => (
-                    <option key={pkg.id} value={pkg.name}>
-                      {pkg.name}
-                    </option>
+                    <option key={pkg.id} value={pkg.name}>{pkg.name}</option>
                   ))}
                 </select>
-
                 <Button
                   type="button"
                   variant="gold"
                   size="md"
-                  onClick={() => setIsMenuPopupOpen(true)}
-                  className="flex items-center gap-1.5 shrink-0 shadow-xs"
+                  onClick={() => setPopupMenuType('lunch')}
+                  className="shrink-0 text-xs shadow-xs"
                 >
-                  <UtensilsCrossed size={13} /> View Menu
+                  View Menu
                 </Button>
               </div>
             </div>
-
-          </div>
-
-          {/* Menu Customization Note */}
-          <div className="rounded-xl border border-[#E8D9A8] bg-[#FDFAF3] px-4 py-3 flex items-start gap-3">
-            <Info size={16} className="text-[#C5A85C] shrink-0 mt-0.5" />
-            <p className="text-xs text-[#907030] leading-relaxed">
-              <strong>Note:</strong> Please feel free to amend or alter the menus as per your requirements. Don&apos;t worry about High Tea—it can always be added later.
-            </p>
           </div>
         </div>
 
-        {/* ── 2.5 Lunch Function & 2.6 Dinner Function ── */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          
-          {/* 2.5 Lunch Function */}
-          <div className="rounded-2xl border border-[#E8E2D8] bg-white p-5 space-y-2">
-            <label className="text-xs font-bold uppercase tracking-wider text-[#737373] flex items-center gap-2">
-              <Calendar size={15} className="text-[#C5A85C]" />
-              2.5 Lunch Function
-            </label>
-            <select
-              value={lunchFunction}
-              onChange={e => setLunchFunction(e.target.value)}
-              className="w-full border border-[#E8E2D8] rounded-xl px-4 py-3 text-sm font-medium text-[#1A1A1A] focus:outline-none focus:border-[#C5A85C] bg-white shadow-xs cursor-pointer"
-            >
-              {LUNCH_FUNCTIONS.map(fn => (
-                <option key={fn} value={fn}>
-                  {fn}
-                </option>
-              ))}
-            </select>
+        {/* ── 2.6 & 2.7 DINNER: Function & Separate Menu Selection ── */}
+        <div className="rounded-2xl border border-[#E8E2D8] bg-white p-5 space-y-4">
+          <div className="flex items-center gap-2 border-b border-[#F0EDE9] pb-3">
+            <Flame size={16} className="text-red-500" />
+            <h3 className="text-sm font-bold uppercase tracking-wider text-[#1A1A1A]">Dinner Configuration</h3>
           </div>
 
-          {/* 2.6 Dinner Function */}
-          <div className="rounded-2xl border border-[#E8E2D8] bg-white p-5 space-y-2">
-            <label className="text-xs font-bold uppercase tracking-wider text-[#737373] flex items-center gap-2">
-              <Calendar size={15} className="text-[#C5A85C]" />
-              2.6 Dinner Function
-            </label>
-            <select
-              value={dinnerFunction}
-              onChange={e => setDinnerFunction(e.target.value)}
-              className="w-full border border-[#E8E2D8] rounded-xl px-4 py-3 text-sm font-medium text-[#1A1A1A] focus:outline-none focus:border-[#C5A85C] bg-white shadow-xs cursor-pointer"
-            >
-              {DINNER_FUNCTIONS.map(fn => (
-                <option key={fn} value={fn}>
-                  {fn}
-                </option>
-              ))}
-            </select>
-          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Dinner Function */}
+            <div>
+              <label className="text-xs font-semibold uppercase tracking-wider text-[#737373] flex items-center gap-1.5 mb-2">
+                <Calendar size={13} className="text-[#C5A85C]" /> Dinner Function
+              </label>
+              <select
+                value={dinnerFunction}
+                onChange={e => setDinnerFunction(e.target.value)}
+                className="w-full border border-[#E8E2D8] rounded-xl px-4 py-2.5 text-xs font-semibold text-[#1A1A1A] focus:outline-none focus:border-[#C5A85C] bg-white cursor-pointer shadow-xs"
+              >
+                {DINNER_FUNCTIONS.map(fn => (
+                  <option key={fn} value={fn}>{fn}</option>
+                ))}
+              </select>
+            </div>
 
+            {/* Dinner Menu Category */}
+            <div>
+              <label className="text-xs font-semibold uppercase tracking-wider text-[#737373] flex items-center gap-1.5 mb-2">
+                <UtensilsCrossed size={13} className="text-[#C5A85C]" /> Dinner Menu Package
+              </label>
+              <div className="flex gap-2">
+                <select
+                  value={dinnerMenuPackage}
+                  onChange={e => setDinnerMenuPackage(e.target.value)}
+                  className="flex-1 border border-[#E8E2D8] rounded-xl px-3 py-2.5 text-xs font-semibold text-[#1A1A1A] focus:outline-none focus:border-[#C5A85C] bg-white cursor-pointer shadow-xs"
+                >
+                  {MENU_PACKAGES.map(pkg => (
+                    <option key={pkg.id} value={pkg.name}>{pkg.name}</option>
+                  ))}
+                </select>
+                <Button
+                  type="button"
+                  variant="gold"
+                  size="md"
+                  onClick={() => setPopupMenuType('dinner')}
+                  className="shrink-0 text-xs shadow-xs"
+                >
+                  View Menu
+                </Button>
+              </div>
+            </div>
+          </div>
         </div>
 
       </div>
 
       {/* ── Popup Menu Modal ── */}
       <AnimatePresence>
-        {isMenuPopupOpen && (
+        {popupMenuType !== null && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
@@ -301,12 +322,12 @@ export function StepDayPlan({
                 <div className="flex items-center gap-2">
                   <UtensilsCrossed size={18} className="text-[#C5A85C]" />
                   <h3 className="text-lg font-semibold text-[#1A1A1A]">
-                    {menuPackage} — <span className="capitalize text-[#C5A85C]">{foodPreference}</span>
+                    {popupMenuType === 'lunch' ? lunchMenuPackage : dinnerMenuPackage} — <span className="capitalize text-[#C5A85C]">{foodPreference}</span>
                   </h3>
                 </div>
                 <button
                   type="button"
-                  onClick={() => setIsMenuPopupOpen(false)}
+                  onClick={() => setPopupMenuType(null)}
                   className="w-8 h-8 rounded-full flex items-center justify-center border border-[#E8E2D8] text-[#737373] hover:text-[#1A1A1A] hover:border-[#C5A85C] transition-colors"
                 >
                   <X size={16} />
@@ -346,7 +367,7 @@ export function StepDayPlan({
 
               {/* Modal Footer */}
               <div className="px-6 py-4 border-t border-[#F0EDE9] bg-[#FDFCFA] flex justify-end">
-                <Button size="md" variant="gold" onClick={() => setIsMenuPopupOpen(false)}>
+                <Button size="md" variant="gold" onClick={() => setPopupMenuType(null)}>
                   Close &amp; Continue
                 </Button>
               </div>
