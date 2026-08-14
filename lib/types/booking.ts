@@ -1,9 +1,5 @@
 // -------------------------------------------------------
-// Core Application Types — Mannat Events Phase 2
-// -------------------------------------------------------
-
-// -------------------------------------------------------
-// Lookup / Reference Types (fetched from DB)
+// Core Application Types — Mannat Events Final Flow
 // -------------------------------------------------------
 
 export interface MenuItem {
@@ -39,13 +35,11 @@ export interface WeddingFunction {
 // Day Planning Types
 // -------------------------------------------------------
 
-export type MealType = 'veg' | 'non-veg'
+export type FoodPreference = 'veg' | 'non-veg' | 'mixed'
 
 export interface MealSelection {
-  type: MealType
-  /** IDs of selected menu items */
+  type: 'veg' | 'non-veg'
   menu_item_ids: string[]
-  /** Names kept for review/display without re-fetching */
   menu_item_names: string[]
   guest_count: number
 }
@@ -53,20 +47,42 @@ export interface MealSelection {
 export interface DayPlan {
   day: number
   rooms: number
+  guest_count: number
+  food_preference: FoodPreference
+  lunch_function?: string
+  dinner_function?: string
   lunch: MealSelection
   dinner: MealSelection
 }
 
-// -------------------------------------------------------
-// Function Assignment
-// -------------------------------------------------------
-
 export interface FunctionAssignment {
   function_id: string
   function_name: string
-  /** Which day of the stay this function falls on (1-based) */
   day: number
 }
+
+// -------------------------------------------------------
+// Hotel Comparison Type
+// -------------------------------------------------------
+
+export interface HotelComparisonItem {
+  id: string
+  name: string
+  star_rating: number
+  image_url: string
+  location: string
+  package_price: number
+  price_display: string
+  room_category: string
+  venue_capacity: string
+  catering_details: string
+  amenities: string[]
+  inclusions: string[]
+  exclusions: string[]
+  tax_info: string
+}
+
+export type DecorationPackageTier = 'silver' | 'gold' | 'platinum' | 'luxury'
 
 // -------------------------------------------------------
 // Booking Status
@@ -100,6 +116,8 @@ export interface Booking {
   phone: string | null
   baraat_style: string | null
   decoration_theme_id: string | null
+  decoration_package?: DecorationPackageTier
+  selected_hotel?: HotelComparisonItem
   day_plans: DayPlan[]
   functions: FunctionAssignment[]
   is_flagged: boolean
@@ -110,24 +128,20 @@ export interface Booking {
 }
 
 // -------------------------------------------------------
-// Wizard Form State (built up step-by-step)
+// Wizard Form State
 // -------------------------------------------------------
 
 export interface BookingFormData {
   check_in: string
   check_out: string
-  /** One DayPlan per night of stay */
   day_plans: DayPlan[]
-  /** Wedding functions assigned to days */
   functions: FunctionAssignment[]
-  /** UUID of the selected decoration theme */
-  decoration_theme_id: string
-  /** Title kept for display without re-fetching */
-  decoration_theme_title: string
-  /** e.g. 'traditional' | 'stylish' | 'dj-on-wheels' */
-  baraat_style: string
-  /** Optional phone — OTP will be added later */
+  decoration_theme_id?: string
+  decoration_theme_title?: string
+  decoration_package?: DecorationPackageTier
+  baraat_style?: string
   phone?: string
+  selected_hotel?: HotelComparisonItem
 }
 
 // -------------------------------------------------------

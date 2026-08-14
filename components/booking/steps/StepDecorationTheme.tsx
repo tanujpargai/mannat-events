@@ -1,187 +1,199 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { ImageOff } from 'lucide-react'
-import { DecorationTheme, BookingFormData } from '@/lib/types'
+import { Sparkles, Check, Info, ShieldCheck, Crown, Gem, Award } from 'lucide-react'
+import { BookingFormData, DecorationPackageTier } from '@/lib/types'
 import { Button } from '@/components/ui/Button'
 import { cn } from '@/lib/utils/cn'
 
 interface Props {
   data: Partial<BookingFormData>
-  themes: DecorationTheme[]
-  onNext: (id: string, title: string) => void
+  onNext: (tier: DecorationPackageTier, title: string) => void
   onPrev: () => void
 }
 
-/** Full-bleed 3D parallax theme card with mouse-driven image shift */
-function ThemeCard({
-  theme,
-  isSelected,
-  onSelect,
-}: {
-  theme: DecorationTheme
-  isSelected: boolean
-  onSelect: () => void
-}) {
-  const ref = useRef<HTMLButtonElement>(null)
-  const [imgStyle, setImgStyle] = useState({ transform: 'scale(1.06) translate(0px, 0px)' })
-  const [cardStyle, setCardStyle] = useState({})
+const DECORATION_PACKAGES: {
+  id: DecorationPackageTier
+  title: string
+  subtitle: string
+  icon: React.ReactNode
+  badge: string
+  features: string[]
+  imageUrl: string
+}[] = [
+  {
+    id: 'silver',
+    title: 'Silver Package',
+    subtitle: 'Elegant Standard Decor',
+    icon: <Award size={20} className="text-slate-500" />,
+    badge: 'Essential',
+    features: [
+      'Standard floral mandap setup',
+      'Ambient LED warm lighting',
+      'Welcome arch & walkway drapes',
+      'Standard seating covers & runners',
+    ],
+    imageUrl: '/mandap.jpg',
+  },
+  {
+    id: 'gold',
+    title: 'Gold Package',
+    subtitle: 'Royal Mughal Aesthetics',
+    icon: <Sparkles size={20} className="text-amber-500" />,
+    badge: 'Popular',
+    features: [
+      'Ornate dome mandap with fresh blooms',
+      'Fairytale fairytale fairy lights & chandelier',
+      'Photobooth with floral backdrop',
+      'Royal red sandstone stage backdrop',
+    ],
+    imageUrl: '/royal.jpg',
+  },
+  {
+    id: 'platinum',
+    title: 'Platinum Package',
+    subtitle: 'Opulent Palace Styling',
+    icon: <Gem size={20} className="text-cyan-600" />,
+    badge: 'Premium',
+    features: [
+      'Custom grand stage with import flowers',
+      'Taj-view entrance gate with mirrors',
+      'Intricate floral aisles & varmala stage',
+      'Architectural projection lighting',
+    ],
+    imageUrl: '/floral.jpg',
+  },
+  {
+    id: 'luxury',
+    title: 'Luxury Package',
+    subtitle: 'Bespoke Imperial Extravaganza',
+    icon: <Crown size={20} className="text-[#C5A85C]" />,
+    badge: 'Signature',
+    features: [
+      'Fully customized imperial theme',
+      'Exotic orchid & rose floral canopy',
+      'Designer lounge furniture & bar setup',
+      'Complete venue transformation & FX',
+    ],
+    imageUrl: '/palace.jpg',
+  },
+]
 
-  function handleMouseMove(e: React.MouseEvent) {
-    const el   = ref.current
-    if (!el) return
-    const rect = el.getBoundingClientRect()
-    const x    = (e.clientX - rect.left) / rect.width  - 0.5
-    const y    = (e.clientY - rect.top)  / rect.height - 0.5
-
-    // Image parallax
-    setImgStyle({
-      transform: `scale(1.1) translate(${x * -12}px, ${y * -12}px)`,
-    })
-    // Card 3D tilt
-    setCardStyle({
-      transform: `perspective(1200px) rotateX(${-y * 8}deg) rotateY(${x * 8}deg) scale3d(1.02, 1.02, 1.02)`,
-      transition: 'transform 0.05s linear',
-    })
-  }
-
-  function handleMouseLeave() {
-    setImgStyle({ transform: 'scale(1.06) translate(0px, 0px)' })
-    setCardStyle({
-      transform: 'perspective(1200px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)',
-      transition: 'transform 0.6s cubic-bezier(0.16, 1, 0.3, 1)',
-    })
-  }
-
-  return (
-    <button
-      ref={ref}
-      type="button"
-      onClick={onSelect}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
-      style={{ ...cardStyle, transformStyle: 'preserve-3d' }}
-      className={cn(
-        'group relative w-full text-left rounded-3xl overflow-hidden cursor-pointer',
-        'focus-visible:outline-none',
-        isSelected
-          ? 'ring-gold-glow shadow-3d-selected'
-          : 'shadow-3d hover:shadow-3d-hover'
-      )}
-    >
-      {/* Image */}
-      <div className="relative w-full aspect-[16/9] overflow-hidden bg-[#F0EDE8]">
-        {theme.image_url ? (
-          <img
-            src={theme.image_url}
-            alt={theme.title}
-            style={{ ...imgStyle, transition: 'transform 0.1s linear' }}
-            className="w-full h-full object-cover"
-          />
-        ) : (
-          <div className="w-full h-full flex flex-col items-center justify-center gap-3 bg-gradient-to-br from-[#F5EDD6] to-[#F0E6C8]">
-            <ImageOff size={28} className="text-[#C5A85C] opacity-50" strokeWidth={1.4} />
-            <span className="text-xs text-[#A08040] font-medium">Image coming soon</span>
-          </div>
-        )}
-
-        {/* Selected overlay */}
-        {isSelected && (
-          <>
-            <div className="absolute inset-0 bg-[#C5A85C]/10" />
-            <div className="absolute inset-0 shimmer-gold" />
-            {/* Gold border inset */}
-            <div className="absolute inset-0 ring-2 ring-inset ring-[#C5A85C]" />
-          </>
-        )}
-
-        {/* Gold tick */}
-        {isSelected && (
-          <div className="absolute top-4 right-4 z-20 w-9 h-9 rounded-full bg-[#C5A85C] flex items-center justify-center shadow-md">
-            <svg width="14" height="14" viewBox="0 0 12 12" fill="none">
-              <path d="M2 6l3 3 5-5" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </div>
-        )}
-      </div>
-
-      {/* Info panel */}
-      <div className={cn(
-        'px-6 py-5 border-x-2 border-b-2 rounded-b-3xl transition-colors duration-300',
-        isSelected ? 'bg-[#FDFAF3] border-[#C5A85C]' : 'bg-white border-[#E8E2D8]'
-      )}>
-        <h3 className="text-lg font-serif font-medium text-[#1A1A1A] mb-1">
-          {theme.title}
-        </h3>
-        {theme.description && (
-          <p className="text-sm text-[#737373] leading-relaxed line-clamp-2">
-            {theme.description}
-          </p>
-        )}
-      </div>
-    </button>
+export function StepDecorationTheme({ data, onNext, onPrev }: Props) {
+  const [selectedTier, setSelectedTier] = useState<DecorationPackageTier>(
+    data.decoration_package ?? 'gold'
   )
-}
 
-export function StepDecorationTheme({ data, themes, onNext, onPrev }: Props) {
-  const selected = data.decoration_theme_id ?? ''
-
-  function handleSkip() {
-    onNext('', '')
+  function handleContinue() {
+    const pkg = DECORATION_PACKAGES.find(p => p.id === selectedTier)
+    onNext(selectedTier, pkg?.title ?? 'Gold Package')
   }
 
   return (
     <motion.div
-      initial={{ opacity: 0, x: 40 }}
+      initial={{ opacity: 0, x: 30 }}
       animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: -40 }}
+      exit={{ opacity: 0, x: -30 }}
       transition={{ type: 'spring', stiffness: 280, damping: 28 }}
       className="pb-28 md:pb-0"
     >
-      <h2 className="text-headline mb-3">Decoration Theme</h2>
-      <p className="text-body text-[#737373] mb-10">
-        Select the visual style that will define your entire celebration.
-      </p>
-
-      {themes.length === 0 ? (
-        <div className="py-16 text-center rounded-2xl border border-dashed border-[#E8E2D8] bg-white p-6 shadow-3d">
-          <p className="text-sm text-[#737373] mb-6">No decoration themes are available yet. You can continue or skip this step.</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-7">
-          {themes.map((theme, i) => (
-            <motion.div
-              key={theme.id}
-              initial={{ opacity: 0, y: 28 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.1, type: 'spring', stiffness: 260, damping: 28 }}
-            >
-              <ThemeCard
-                theme={theme}
-                isSelected={selected === theme.id}
-                onSelect={() => onNext(theme.id, theme.title)}
-              />
-            </motion.div>
-          ))}
-        </div>
-      )}
-
-      {/* Desktop Nav */}
-      <div className="hidden md:flex justify-between mt-10 pt-6 border-t border-[#E8E2D8]">
-        <Button variant="secondary" size="lg" onClick={onPrev}>Previous</Button>
-        {themes.length === 0 && (
-          <Button size="lg" onClick={handleSkip}>Next Step</Button>
-        )}
+      <div className="mb-6">
+        <span className="px-3 py-1 rounded-full bg-[#F5EDD6] border border-[#E8D9A8] text-xs font-bold tracking-widest text-[#A08040] uppercase">
+          Step 3: Decor
+        </span>
       </div>
 
-      {/* Mobile Nav */}
+      <h2 className="text-headline mb-1">Decoration Package Selection</h2>
+      <p className="text-body text-[#737373] mb-6">
+        Select your base decoration tier for your destination wedding setup in Agra.
+      </p>
+
+      {/* Mandatory Disclaimer Banner */}
+      <div className="rounded-2xl border border-[#E8D9A8] bg-[#FDFAF3] p-4 sm:p-5 mb-8 flex items-start gap-3.5 shadow-xs">
+        <Info size={20} className="text-[#C5A85C] shrink-0 mt-0.5" />
+        <div className="text-xs text-[#907030] leading-relaxed">
+          <strong className="block text-sm font-semibold text-[#1A1A1A] mb-1">
+            Disclaimer: Base Package Selection
+          </strong>
+          You are currently selecting the standard decoration package. Final decoration details such as colour palettes, floral arrangements, stage design, lighting, and other décor customizations can be finalized later according to your preferences. At this stage, you are only selecting the base decoration package.
+        </div>
+      </div>
+
+      {/* 4 Cards Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {DECORATION_PACKAGES.map((pkg) => {
+          const isSel = selectedTier === pkg.id
+          return (
+            <button
+              key={pkg.id}
+              type="button"
+              onClick={() => setSelectedTier(pkg.id)}
+              className={cn(
+                'group relative text-left rounded-3xl overflow-hidden border transition-all duration-300 bg-white cursor-pointer',
+                isSel
+                  ? 'border-[#C5A85C] ring-2 ring-[#C5A85C] shadow-lg scale-[1.01]'
+                  : 'border-[#E8E2D8] hover:border-[#C5A85C]/60 shadow-sm hover:shadow-md'
+              )}
+            >
+              {/* Image & Badge */}
+              <div className="relative h-44 w-full bg-[#F5EDD6] overflow-hidden">
+                <img
+                  src={pkg.imageUrl}
+                  alt={pkg.title}
+                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                
+                <span className="absolute top-4 left-4 px-3 py-1 rounded-full text-[10px] font-bold tracking-widest uppercase bg-white/90 backdrop-blur-md text-[#1A1A1A]">
+                  {pkg.badge}
+                </span>
+
+                {isSel && (
+                  <div className="absolute top-4 right-4 w-8 h-8 rounded-full bg-[#C5A85C] text-white flex items-center justify-center shadow-md">
+                    <Check size={16} strokeWidth={3} />
+                  </div>
+                )}
+
+                <div className="absolute bottom-4 left-4 right-4 text-white">
+                  <div className="flex items-center gap-2 mb-1">
+                    {pkg.icon}
+                    <h3 className="text-lg font-bold">{pkg.title}</h3>
+                  </div>
+                  <p className="text-xs text-white/80">{pkg.subtitle}</p>
+                </div>
+              </div>
+
+              {/* Features List */}
+              <div className="p-5">
+                <ul className="space-y-2">
+                  {pkg.features.map((feat) => (
+                    <li key={feat} className="flex items-center gap-2 text-xs text-[#737373]">
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#C5A85C] shrink-0" />
+                      {feat}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </button>
+          )
+        })}
+      </div>
+
+      {/* Nav */}
+      <div className="hidden md:flex justify-between mt-10 pt-6 border-t border-[#E8E2D8]">
+        <Button variant="secondary" size="lg" onClick={onPrev}>Previous</Button>
+        <Button size="lg" variant="gold" onClick={handleContinue}>
+          Click to See Prices
+        </Button>
+      </div>
+
       <div className="fixed md:hidden bottom-0 left-0 right-0 z-50 border-t border-[#E8E2D8] bg-white/95 backdrop-blur-md px-4 py-3">
         <div className="max-w-lg mx-auto flex gap-3">
           <Button variant="secondary" size="lg" onClick={onPrev} className="flex-1">Previous</Button>
-          {themes.length === 0 && (
-            <Button size="lg" onClick={handleSkip} className="flex-1">Next Step</Button>
-          )}
+          <Button size="lg" variant="gold" onClick={handleContinue} className="flex-1">
+            See Prices →
+          </Button>
         </div>
       </div>
     </motion.div>

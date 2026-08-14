@@ -1,42 +1,35 @@
 import { DayPlan } from '@/lib/types'
 
 /**
- * Calculates the number of nights between two ISO date strings.
- * Returns 0 if dates are invalid or check_out <= check_in.
+ * Calculates night duration between check_in and check_out date strings.
+ * Returns 0 if check_out <= check_in or either string is invalid.
  */
 export function calculateDuration(checkIn: string, checkOut: string): number {
   if (!checkIn || !checkOut) return 0
-  const msPerDay = 1000 * 60 * 60 * 24
-  const diff = new Date(checkOut).getTime() - new Date(checkIn).getTime()
-  return diff > 0 ? Math.round(diff / msPerDay) : 0
+  const start = new Date(checkIn)
+  const end = new Date(checkOut)
+  if (isNaN(start.getTime()) || isNaN(end.getTime())) return 0
+  const diffTime = end.getTime() - start.getTime()
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+  return Math.max(0, diffDays)
 }
 
 /**
- * Formats an ISO date string (YYYY-MM-DD) into a human-readable format.
- * e.g. "2026-10-14" → "14 Oct 2026"
+ * Formats a Date object or ISO string into "DD MMM YYYY", e.g. "12 OCT 2026".
  */
-export function formatDate(iso: string): string {
-  if (!iso) return ''
-  return new Date(iso).toLocaleDateString('en-IN', {
-    day:   'numeric',
-    month: 'short',
-    year:  'numeric',
-  })
+export function formatDate(dateString: string | Date): string {
+  if (!dateString) return '—'
+  const date = typeof dateString === 'string' ? new Date(dateString) : dateString
+  if (isNaN(date.getTime())) return '—'
+  const day = String(date.getDate()).padStart(2, '0')
+  const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC']
+  const month = months[date.getMonth()]
+  const year = date.getFullYear()
+  return `${day} ${month} ${year}`
 }
 
 /**
- * Generates a human-readable unique booking ID.
- * Format: MNT-YYYYMMDD-XXXX (4 random alphanumeric chars)
- */
-export function generateBookingId(): string {
-  const date = new Date()
-  const datePart   = date.toISOString().slice(0, 10).replace(/-/g, '')
-  const randomPart = Math.random().toString(36).toUpperCase().slice(2, 6)
-  return `MNT-${datePart}-${randomPart}`
-}
-
-/**
- * Returns ordinal suffix for a number (1st, 2nd, 3rd, etc.)
+ * Maps a numeric day index (1-based) to an ordinal string, e.g. 1 -> "1st".
  */
 export function ordinal(n: number): string {
   const s = ['th', 'st', 'nd', 'rd']
@@ -46,35 +39,44 @@ export function ordinal(n: number): string {
 
 /**
  * Generates the initial default DayPlans for a given number of days.
- * All fields set to empty/zero — the wizard fills them step-by-step.
  */
 export function generateDefaultDayPlans(duration: number): DayPlan[] {
   return Array.from({ length: duration }, (_, i) => ({
     day: i + 1,
-    rooms: 1,
+    rooms: 10,
+    guest_count: 50,
+    food_preference: 'veg' as const,
+    lunch_function: 'Welcome Lunch',
+    dinner_function: 'Welcome Dinner',
     lunch: {
       type: 'veg' as const,
       menu_item_ids: [],
-      menu_item_names: [],
-      guest_count: 1,
+      menu_item_names: ['Welcome Lunch'],
+      guest_count: 50,
     },
     dinner: {
       type: 'veg' as const,
       menu_item_ids: [],
-      menu_item_names: [],
-      guest_count: 1,
+      menu_item_names: ['Welcome Dinner'],
+      guest_count: 50,
     },
   }))
 }
 
-/**
- * Returns label for baraat style
- */
-export function getBaraatLabel(style: string): string {
-  const labels: Record<string, string> = {
-    traditional:   'Traditional Baraat',
-    stylish:       'Stylish Baraat',
-    'dj-on-wheels': 'DJ on Wheels',
+export function generateBookingId(): string {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+  let result = 'ME-'
+  for (let i = 0; i < 6; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length))
   }
-  return labels[style] ?? style
+  return result
+}
+
+export function getBaraatLabel(style: string): string {
+  switch (style) {
+    case 'traditional': return 'Traditional Horse Baraat'
+    case 'stylish': return 'Vintage Luxury Car Baraat'
+    case 'dj-on-wheels': return 'Mobile Sound & Brass Band'
+    default: return style
+  }
 }

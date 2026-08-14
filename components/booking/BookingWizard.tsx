@@ -1,84 +1,75 @@
 'use client'
 
-import { useReducer, useEffect, useCallback } from 'react'
-import { AnimatePresence } from 'framer-motion'
+import { useReducer, useEffect, useCallback, useState } from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
 import { useRouter } from 'next/navigation'
 
 import {
   BookingFormData,
   DayPlan,
-  FunctionAssignment,
+  DecorationPackageTier,
+  HotelComparisonItem,
   MenuItem,
-  DecorationTheme,
-  WeddingFunction,
 } from '@/lib/types'
 import {
   calculateDuration,
   generateDefaultDayPlans,
 } from '@/lib/utils/booking'
 
-import { StepDates }             from './steps/StepDates'
-import { StepDayPlan }            from './steps/StepDayPlan'
-import { StepWeddingFunctions }  from './steps/StepWeddingFunctions'
-import { StepDecorationTheme }   from './steps/StepDecorationTheme'
-import { StepBaraatStyle }       from './steps/StepBaraatStyle'
-import { StepReview }            from './steps/StepReview'
+import { StepDates } from './steps/StepDates'
+import { StepDayPlan } from './steps/StepDayPlan'
+import { StepDecorationTheme } from './steps/StepDecorationTheme'
+import { StepHotelComparison } from './steps/StepHotelComparison'
+import { DynamicProgressBar } from './DynamicProgressBar'
+import { LiveBookingSummary } from './LiveBookingSummary'
+import { Phone, ShieldCheck, AlertCircle, ArrowRight, RefreshCcw } from 'lucide-react'
+import { createClient } from '@/lib/supabase/client'
+import { Button } from '@/components/ui/Button'
+import { Label } from '@/components/ui/Label'
 
-import { DynamicProgressBar }    from './DynamicProgressBar'
-import { LiveBookingSummary }    from './LiveBookingSummary'
-
-// -------------------------------------------------------
-// Step type system
-// -------------------------------------------------------
 type StepKind =
   | { kind: 'dates' }
-  | { kind: 'day-plan';           day: number }
-  | { kind: 'functions' }
+  | { kind: 'day-plan'; day: number }
   | { kind: 'decoration' }
-  | { kind: 'baraat' }
-  | { kind: 'review' }
+  | { kind: 'verify' }
+  | { kind: 'hotel-comparison' }
 
 function buildStepList(duration: number): StepKind[] {
   const steps: StepKind[] = [{ kind: 'dates' }]
   for (let day = 1; day <= duration; day++) {
     steps.push({ kind: 'day-plan', day })
   }
-  steps.push({ kind: 'functions' })
   steps.push({ kind: 'decoration' })
-  steps.push({ kind: 'baraat' })
-  steps.push({ kind: 'review' })
+  steps.push({ kind: 'verify' })
+  steps.push({ kind: 'hotel-comparison' })
   return steps
 }
 
 function stepLabel(step: StepKind): string {
   switch (step.kind) {
-    case 'dates':              return 'Stay Dates'
-    case 'day-plan':           return `Day ${step.day} Plan`
-    case 'functions':          return 'Functions'
-    case 'decoration':         return 'Decoration'
-    case 'baraat':             return 'Baraat'
-    case 'review':             return 'Review'
+    case 'dates':            return 'Stay Dates'
+    case 'day-plan':         return `Day ${step.day} Planning`
+    case 'decoration':       return 'Decoration Package'
+    case 'verify':           return 'Mobile Verification'
+    case 'hotel-comparison': return 'Hotel Comparison'
   }
 }
 
-// -------------------------------------------------------
-// Wizard state
-// -------------------------------------------------------
 interface WizardState {
   stepIndex: number
-  steps:     StepKind[]
-  data:      Partial<BookingFormData>
+  steps: StepKind[]
+  data: Partial<BookingFormData>
 }
 
 type WizardAction =
-  | { type: 'SET_DATES';         checkIn: string; checkOut: string }
-  | { type: 'SET_DAY_PLAN';      day: number; plan: DayPlan }
-  | { type: 'SET_FUNCTIONS';     assignments: FunctionAssignment[] }
-  | { type: 'SET_DECORATION';    id: string; title: string }
-  | { type: 'SET_BARAAT';        style: string }
+  | { type: 'SET_DATES'; checkIn: string; checkOut: string }
+  | { type: 'SET_DAY_PLAN'; day: number; plan: DayPlan }
+  | { type: 'SET_DECORATION'; tier: DecorationPackageTier; title: string }
+  | { type: 'SET_PHONE'; phone: string }
+  | { type: 'SET_HOTEL'; hotel: HotelComparisonItem }
   | { type: 'NEXT' }
   | { type: 'PREV' }
-  | { type: 'RESTORE';           state: WizardState }
+  | { type: 'RESTORE'; state: WizardState }
 
 function updateDayPlan(
   plans: DayPlan[],
@@ -92,7 +83,7 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
   switch (action.type) {
     case 'SET_DATES': {
       const duration = calculateDuration(action.checkIn, action.checkOut)
-      const steps    = buildStepList(duration)
+      const steps = buildStepList(duration)
       const dayPlans = generateDefaultDayPlans(duration)
       return {
         ...state,
@@ -100,7 +91,7 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
         stepIndex: 1,
         data: {
           ...state.data,
-          check_in:  action.checkIn,
+          check_in: action.checkIn,
           check_out: action.checkOut,
           day_plans: dayPlans,
         },
@@ -116,21 +107,33 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
         },
       }
 
-    case 'SET_FUNCTIONS':
-      return { ...state, data: { ...state.data, functions: action.assignments } }
-
     case 'SET_DECORATION':
       return {
         ...state,
         data: {
           ...state.data,
-          decoration_theme_id:    action.id,
+          decoration_package: action.tier,
           decoration_theme_title: action.title,
         },
       }
 
-    case 'SET_BARAAT':
-      return { ...state, data: { ...state.data, baraat_style: action.style } }
+    case 'SET_PHONE':
+      return {
+        ...state,
+        data: {
+          ...state.data,
+          phone: action.phone,
+        },
+      }
+
+    case 'SET_HOTEL':
+      return {
+        ...state,
+        data: {
+          ...state.data,
+          selected_hotel: action.hotel,
+        },
+      }
 
     case 'NEXT':
       return {
@@ -152,29 +155,14 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
   }
 }
 
-const STORAGE_KEY = 'mannat-booking-v4'
+const STORAGE_KEY = 'mannat-booking-v5'
 
 function loadSavedState(): Partial<WizardState> | null {
   if (typeof window === 'undefined') return null
-  // Clear out all old versioned keys so stale data can't bleed through
-  ;['mannat-booking-v1', 'mannat-booking-v2', 'mannat-booking-v3'].forEach((k) => {
-    try { localStorage.removeItem(k) } catch { /* ignore */ }
-  })
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) return null
-    const parsed = JSON.parse(raw) as Partial<WizardState>
-    // Validate day_plans shape — if any plan is missing lunch/dinner, discard the cache
-    const dayPlans = parsed.data?.day_plans
-    if (dayPlans && Array.isArray(dayPlans)) {
-      for (const plan of dayPlans) {
-        if (!plan.lunch || !plan.dinner) {
-          localStorage.removeItem(STORAGE_KEY)
-          return null
-        }
-      }
-    }
-    return parsed
+    return JSON.parse(raw) as Partial<WizardState>
   } catch {
     return null
   }
@@ -182,94 +170,274 @@ function loadSavedState(): Partial<WizardState> | null {
 
 const DEFAULT_WIZARD_STATE: WizardState = {
   stepIndex: 0,
-  steps:     [{ kind: 'dates' }] as StepKind[],
-  data:      {},
+  steps: [{ kind: 'dates' }] as StepKind[],
+  data: {},
 }
 
-// -------------------------------------------------------
-// Component
-// -------------------------------------------------------
+// ── Mobile OTP Gate Component ──
+function StepMobileVerification({ onVerified, onPrev }: { onVerified: (phone: string) => void; onPrev: () => void }) {
+  const [step, setStep] = useState<'phone' | 'otp'>('phone')
+  const [phone, setPhone] = useState('')
+  const [otp, setOtp] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [resendCooldown, setResendCooldown] = useState(0)
+
+  function formatPhone(raw: string) {
+    const digits = raw.replace(/\D/g, '')
+    if (digits.startsWith('91') && digits.length > 10) return `+${digits}`
+    return `+91${digits}`
+  }
+
+  function startCooldown() {
+    setResendCooldown(30)
+    const timer = setInterval(() => {
+      setResendCooldown((c) => {
+        if (c <= 1) { clearInterval(timer); return 0 }
+        return c - 1
+      })
+    }, 1000)
+  }
+
+  async function sendOTP(e: React.FormEvent) {
+    e.preventDefault()
+    setError(null)
+    if (phone.replace(/\D/g, '').length < 10) {
+      setError('Please enter a valid 10-digit mobile number.')
+      return
+    }
+    setIsLoading(true)
+    try {
+      const supabase = createClient()
+      const { error: otpError } = await supabase.auth.signInWithOtp({
+        phone: formatPhone(phone),
+        options: { shouldCreateUser: true },
+      })
+      if (otpError) {
+        setError(otpError.message || 'Failed to send OTP. Please try again.')
+        return
+      }
+      setStep('otp')
+      startCooldown()
+    } catch {
+      setError('Unable to send OTP. Please try again.')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  async function verifyOTP(e: React.FormEvent) {
+    e.preventDefault()
+    setError(null)
+    if (otp.length < 4) {
+      setError('Please enter the 6-digit OTP.')
+      return
+    }
+    setIsLoading(true)
+    try {
+      const supabase = createClient()
+      const { error: verifyError } = await supabase.auth.verifyOtp({
+        phone: formatPhone(phone),
+        token: otp,
+        type: 'sms',
+      })
+      if (verifyError) {
+        setError('Invalid or expired OTP. Please try again.')
+        return
+      }
+      onVerified(formatPhone(phone))
+    } catch {
+      setError('Unable to verify OTP. Please try again.')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  async function resendOTP() {
+    if (resendCooldown > 0) return
+    setError(null)
+    setIsLoading(true)
+    try {
+      const supabase = createClient()
+      await supabase.auth.signInWithOtp({
+        phone: formatPhone(phone),
+        options: { shouldCreateUser: true },
+      })
+      startCooldown()
+    } catch {
+      setError('Unable to resend OTP.')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, x: 30 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: -30 }}
+      transition={{ type: 'spring', stiffness: 280, damping: 28 }}
+      className="pb-28 md:pb-0"
+    >
+      <div className="mb-6">
+        <span className="px-3 py-1 rounded-full bg-[#F5EDD6] border border-[#E8D9A8] text-xs font-bold tracking-widest text-[#A08040] uppercase">
+          Step 5: Mobile Verification
+        </span>
+      </div>
+
+      <h2 className="text-headline mb-1">Verify Mobile Number to See Prices</h2>
+      <p className="text-body text-[#737373] mb-8">
+        Enter your 10-digit mobile number. We will send a one-time passcode to reveal pricing &amp; hotel comparison.
+      </p>
+
+      <div className="max-w-md rounded-2xl border border-[#E8E2D8] bg-white p-6 shadow-sm">
+        <AnimatePresence mode="wait">
+          {step === 'phone' ? (
+            <motion.form
+              key="phone-step"
+              initial={{ opacity: 0, x: 16 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -16 }}
+              onSubmit={sendOTP}
+              className="space-y-4"
+            >
+              <div>
+                <Label htmlFor="phone" required>
+                  Mobile Number
+                </Label>
+                <div className="relative flex items-center">
+                  <span className="absolute left-3 text-sm font-semibold text-[#C5A85C] pointer-events-none select-none">
+                    +91
+                  </span>
+                  <input
+                    id="phone"
+                    type="tel"
+                    inputMode="numeric"
+                    maxLength={10}
+                    placeholder="98765 43210"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))}
+                    disabled={isLoading}
+                    className="w-full pl-12 pr-10 py-3 rounded-xl border border-[#E8E2D8] text-sm font-semibold text-[#1A1A1A] placeholder:text-[#C0B9B0] focus:outline-none focus:border-[#C5A85C] transition-colors"
+                  />
+                  <Phone size={15} className="absolute right-3 text-[#C0B9B0]" />
+                </div>
+              </div>
+
+              {error && (
+                <motion.p initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} className="text-xs font-semibold text-red-600 flex items-center gap-1.5">
+                  <AlertCircle size={13} className="shrink-0" />
+                  {error}
+                </motion.p>
+              )}
+
+              <Button type="submit" loading={isLoading} variant="gold" size="lg" className="w-full">
+                Send OTP <ArrowRight size={14} />
+              </Button>
+            </motion.form>
+          ) : (
+            <motion.form
+              key="otp-step"
+              initial={{ opacity: 0, x: 16 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -16 }}
+              onSubmit={verifyOTP}
+              className="space-y-4"
+            >
+              <div className="rounded-xl bg-[#F5EDD6] border border-[#E8D9A8] px-4 py-3 flex items-start gap-2.5 text-sm text-[#A08040]">
+                <ShieldCheck size={16} className="text-[#C5A85C] mt-0.5 shrink-0" />
+                <span>
+                  OTP sent to <strong className="text-[#1A1A1A]">+91 {phone}</strong>.{' '}
+                  <button type="button" onClick={() => { setStep('phone'); setOtp(''); setError(null) }} className="underline underline-offset-2 hover:text-[#C5A85C]">
+                    Change?
+                  </button>
+                </span>
+              </div>
+
+              <div>
+                <Label htmlFor="otp" required>
+                  Enter 6-Digit OTP
+                </Label>
+                <input
+                  id="otp"
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={6}
+                  placeholder="• • • • • •"
+                  value={otp}
+                  onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
+                  disabled={isLoading}
+                  className="w-full px-4 py-3 rounded-xl border border-[#E8E2D8] text-center text-2xl font-bold text-[#1A1A1A] tracking-[0.4em] focus:outline-none focus:border-[#C5A85C]"
+                />
+              </div>
+
+              {error && (
+                <motion.p initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} className="text-xs font-semibold text-red-600 flex items-center gap-1.5">
+                  <AlertCircle size={13} className="shrink-0" />
+                  {error}
+                </motion.p>
+              )}
+
+              <Button type="submit" loading={isLoading} variant="gold" size="lg" className="w-full">
+                Verify &amp; Unlock Prices
+              </Button>
+
+              <div className="text-center">
+                <button
+                  type="button"
+                  onClick={resendOTP}
+                  disabled={resendCooldown > 0 || isLoading}
+                  className="text-xs font-semibold text-[#C5A85C] hover:underline disabled:opacity-40"
+                >
+                  <RefreshCcw size={11} className="inline mr-1" />
+                  {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 'Resend OTP'}
+                </button>
+              </div>
+            </motion.form>
+          )}
+        </AnimatePresence>
+      </div>
+
+      <div className="hidden md:flex justify-start mt-10 pt-6 border-t border-[#E8E2D8]">
+        <Button variant="secondary" size="lg" onClick={onPrev}>Previous</Button>
+      </div>
+    </motion.div>
+  )
+}
+
 export function BookingWizard() {
   const router = useRouter()
 
-  // Remote data (fetched once)
-  const [menus,     setMenus]     = useReducer(
-    (_: { veg: MenuItem[]; 'non-veg': MenuItem[] }, v: { veg: MenuItem[]; 'non-veg': MenuItem[] }) => v,
-    { veg: [], 'non-veg': [] }
-  )
-  const [themes,    setThemes]    = useReducer((_: DecorationTheme[], v: DecorationTheme[]) => v, [])
-  const [functions, setFunctions] = useReducer((_: WeddingFunction[], v: WeddingFunction[]) => v, [])
   const [isSubmitting, setSubmitting] = useReducer((_: boolean, v: boolean) => v, false)
-  const [submitError,  setSubmitError] = useReducer((_: string, v: string) => v, '')
+  const [submitError, setSubmitError] = useReducer((_: string, v: string) => v, '')
 
-  // Wizard state — always start with default for SSR hydration safety
   const [state, dispatch] = useReducer(wizardReducer, DEFAULT_WIZARD_STATE)
 
-  // Restore from localStorage AFTER client hydration (avoids SSR mismatch)
   useEffect(() => {
     const saved = loadSavedState()
     if (saved?.data && saved.steps && typeof saved.stepIndex === 'number') {
       dispatch({ type: 'RESTORE', state: saved as WizardState })
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []) // run once on mount only
+  }, [])
 
-  // Persist to localStorage on every state change
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
-    } catch { /* storage full */ }
+    } catch { /* ignore */ }
   }, [state])
 
-  // Fetch remote data once on mount — then update step list based on what's available
-  useEffect(() => {
-    async function loadData() {
-      try {
-        const [menusRes, themesRes, functionsRes] = await Promise.all([
-          fetch('/api/menus'),
-          fetch('/api/decoration-themes'),
-          fetch('/api/wedding-functions'),
-        ])
-
-        if (menusRes.ok) {
-          const m = await menusRes.json()
-          if (m && typeof m === 'object' && !Array.isArray(m)) {
-            const vegItems    = Array.isArray(m.veg)        ? m.veg        : []
-            const nonVegItems = Array.isArray(m['non-veg']) ? m['non-veg'] : []
-            setMenus({ veg: vegItems, 'non-veg': nonVegItems })
-          }
-        }
-
-        if (themesRes.ok) {
-          const t = await themesRes.json()
-          const arr = Array.isArray(t) ? t : []
-          setThemes(arr)
-        }
-
-        if (functionsRes.ok) {
-          const f = await functionsRes.json()
-          const arr = Array.isArray(f) ? f : []
-          setFunctions(arr)
-        }
-
-      } catch (err) {
-        console.error('[BookingWizard] Failed to load reference data:', err)
-      }
-    }
-
-    loadData()
-  }, [])
-
-
-  // Submit handler
-  const handleSubmit = useCallback(async () => {
+  const handleSubmitEnquiry = useCallback(async (selectedHotel: HotelComparisonItem) => {
     setSubmitting(true)
     setSubmitError('')
     try {
+      const payload = {
+        ...state.data,
+        selected_hotel: selectedHotel,
+      }
       const res = await fetch('/api/bookings', {
-        method:  'POST',
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify(state.data),
+        body: JSON.stringify(payload),
       })
 
       if (!res.ok) {
@@ -288,11 +456,9 @@ export function BookingWizard() {
     }
   }, [state.data, router])
 
-  // ---- Current step ----
   const { stepIndex, steps, data } = state
   const currentStep = steps[stepIndex]
 
-  // ---- Helpers ----
   function next() { dispatch({ type: 'NEXT' }) }
   function prev() { dispatch({ type: 'PREV' }) }
 
@@ -300,7 +466,6 @@ export function BookingWizard() {
     return data.day_plans?.find((p) => p.day === day)
   }
 
-  // ---- Render step ----
   function renderStep(step: StepKind) {
     switch (step.kind) {
       case 'dates':
@@ -321,8 +486,8 @@ export function BookingWizard() {
             day={step.day}
             totalDays={duration}
             plan={plan}
-            vegMenuItems={menus['veg'] ?? []}
-            nonVegMenuItems={menus['non-veg'] ?? []}
+            vegMenuItems={[]}
+            nonVegMenuItems={[]}
             onNext={(newPlan) => {
               dispatch({ type: 'SET_DAY_PLAN', day: step.day, plan: newPlan })
               next()
@@ -332,46 +497,30 @@ export function BookingWizard() {
         )
       }
 
-      case 'functions':
-        return (
-          <StepWeddingFunctions
-            duration={calculateDuration(data.check_in ?? '', data.check_out ?? '')}
-            functions={functions}
-            assignments={data.functions ?? []}
-            onNext={(assignments) => {
-              dispatch({ type: 'SET_FUNCTIONS', assignments })
-              next()
-            }}
-            onPrev={prev}
-          />
-        )
-
       case 'decoration':
         return (
           <StepDecorationTheme
             data={data}
-            themes={themes}
-            onNext={(id, title) => {
-              dispatch({ type: 'SET_DECORATION', id, title })
+            onNext={(tier, title) => {
+              dispatch({ type: 'SET_DECORATION', tier, title })
               next()
             }}
             onPrev={prev}
           />
         )
 
-      case 'baraat':
+      case 'verify':
         return (
-          <StepBaraatStyle
-            data={data}
-            onNext={(style) => {
-              dispatch({ type: 'SET_BARAAT', style })
+          <StepMobileVerification
+            onVerified={(phone) => {
+              dispatch({ type: 'SET_PHONE', phone })
               next()
             }}
             onPrev={prev}
           />
         )
 
-      case 'review':
+      case 'hotel-comparison':
         return (
           <>
             {submitError && (
@@ -379,9 +528,9 @@ export function BookingWizard() {
                 {submitError}
               </div>
             )}
-            <StepReview
-              data={data as BookingFormData}
-              onSubmit={handleSubmit}
+            <StepHotelComparison
+              data={data}
+              onSelectHotel={handleSubmitEnquiry}
               onPrev={prev}
               isSubmitting={isSubmitting}
             />
@@ -397,40 +546,6 @@ export function BookingWizard() {
         background: 'radial-gradient(circle at 10% 20%, #FAF8F5 0%, #F5EDD6 100%)',
       }}
     >
-      {/* Immersive background decoration */}
-      <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">
-        {/* Soft gold glow */}
-        <div
-          className="absolute w-[600px] h-[600px] rounded-full top-[10%] left-[5%] opacity-30 animate-pulse-gold"
-          style={{ background: 'radial-gradient(circle, rgba(201,168,76,0.06) 0%, transparent 75%)' }}
-        />
-        <div
-          className="absolute w-[500px] h-[500px] rounded-full bottom-[10%] right-[5%] opacity-30 animate-pulse-gold"
-          style={{ background: 'radial-gradient(circle, rgba(201,168,76,0.05) 0%, transparent 75%)' }}
-        />
-
-        {/* Floating rotating mandala */}
-        <div className="absolute -bottom-24 -left-24 w-80 h-80 animate-spin-slow opacity-[0.03]">
-          <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="50" cy="50" r="48" stroke="#C9A84C" strokeWidth="0.5"/>
-            <circle cx="50" cy="50" r="36" stroke="#C9A84C" strokeWidth="0.5"/>
-            {[0,45,90,135,180,225,270,315].map(a => (
-              <line key={a} x1="50" y1="2" x2="50" y2="98" stroke="#C9A84C" strokeWidth="0.3"
-                style={{ transformOrigin: '50px 50px', transform: `rotate(${a}deg)` }} />
-            ))}
-            <polygon points="50,10 55,45 90,50 55,55 50,90 45,55 10,50 45,45" stroke="#C9A84C" strokeWidth="0.5" fill="none"/>
-          </svg>
-        </div>
-
-        <div className="absolute -top-20 -right-20 w-72 h-72 animate-spin-slow opacity-[0.02]" style={{ animationDirection: 'reverse' }}>
-          <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="50" cy="50" r="48" stroke="#C9A84C" strokeWidth="0.5"/>
-            <polygon points="50,10 55,45 90,50 55,55 50,90 45,55 10,50 45,45" stroke="#C9A84C" strokeWidth="0.5" fill="none"/>
-          </svg>
-        </div>
-      </div>
-
-      {/* 3D Progress Bar */}
       <DynamicProgressBar
         currentIndex={stepIndex}
         totalSteps={steps.length}
@@ -439,7 +554,6 @@ export function BookingWizard() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-16 relative z-10">
         <div className="flex gap-10 items-start">
-          {/* Main form area */}
           <main className="flex-1 min-w-0">
             <div className="max-w-3xl">
               <AnimatePresence mode="wait">
@@ -450,7 +564,6 @@ export function BookingWizard() {
             </div>
           </main>
 
-          {/* Live summary sidebar (desktop only) */}
           <aside className="hidden xl:block w-80 shrink-0 sticky top-28">
             <LiveBookingSummary data={data} />
           </aside>

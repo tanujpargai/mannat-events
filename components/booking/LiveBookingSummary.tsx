@@ -1,5 +1,5 @@
 import { BookingFormData } from '@/lib/types'
-import { calculateDuration, getBaraatLabel } from '@/lib/utils/booking'
+import { calculateDuration } from '@/lib/utils/booking'
 
 interface LiveBookingSummaryProps {
   data: Partial<BookingFormData>
@@ -37,20 +37,18 @@ export function LiveBookingSummary({ data }: LiveBookingSummaryProps) {
     return v !== undefined && v !== null && v !== ''
   })
 
-  const assignedFunctions = data.functions?.filter((f) => f.day > 0) ?? []
-
   return (
-    <div className="glass-panel rounded-2xl overflow-hidden shadow-3d">
+    <div className="glass-panel rounded-2xl overflow-hidden shadow-3d bg-white border border-[#E8E2D8]">
       {/* Header */}
       <div className="px-6 py-5 border-b border-[#EEEAE4] bg-gradient-to-r from-[#FDFCFA] to-[#FAF6EE]">
         <p className="text-[10px] uppercase tracking-[0.22em] text-[#C5A85C] font-bold mb-1">
-          Your Booking
+          Your Wedding Folio
         </p>
         <h3 className="text-lg font-serif font-medium text-[#1A1A1A]">
           Live Summary
         </h3>
         <p className="mt-1 text-xs leading-relaxed text-[#737373]">
-          Updates automatically as you progress.
+          Updates in real-time as you customize.
         </p>
       </div>
 
@@ -62,13 +60,13 @@ export function LiveBookingSummary({ data }: LiveBookingSummaryProps) {
           </p>
         )}
 
-        <SummaryRow label="Check-in"  value={data.check_in} />
+        <SummaryRow label="Check-in" value={data.check_in} />
         <SummaryRow label="Check-out" value={data.check_out} />
 
         {duration > 0 && (
           <SummaryRow
             label="Duration"
-            value={`${duration} ${duration === 1 ? 'night' : 'nights'}`}
+            value={`${duration} ${duration === 1 ? 'day event' : 'days event'}`}
           />
         )}
 
@@ -76,42 +74,37 @@ export function LiveBookingSummary({ data }: LiveBookingSummaryProps) {
         {data.day_plans && data.day_plans.length > 0 && (
           <div className="py-3.5 border-b border-[#EEEAE4]">
             <p className="text-[11px] font-semibold text-[#A08D62] uppercase tracking-[0.14em] mb-2">
-              Daily Plan
+              Day-by-Day Setup
             </p>
-            <div className="space-y-2">
+            <div className="space-y-3">
               {data.day_plans.map((plan) => (
-                <div key={plan.day} className="text-[13px] text-[#1A1A1A]">
-                  <span className="font-semibold">Day {plan.day}</span>
-                  {' · '}{plan.rooms ?? 0} rm
-                  {plan.lunch?.type && <>{' · '}<span className="capitalize">{plan.lunch.type}</span> lunch</>}
-                  {plan.dinner?.type && <>{' · '}<span className="capitalize">{plan.dinner.type}</span> dinner</>}
+                <div key={plan.day} className="text-[12px] text-[#1A1A1A] bg-[#FDFCFA] p-2.5 rounded-xl border border-[#F0EDE9] space-y-1">
+                  <div className="flex justify-between font-bold text-[#C5A85C]">
+                    <span>Day {plan.day}</span>
+                    <span>{plan.rooms ?? 1} Rooms · {plan.guest_count ?? 50} Guests</span>
+                  </div>
+                  <div className="text-[11px] text-[#737373]">
+                    <span className="font-semibold text-[#1A1A1A]">Lunch:</span> {plan.lunch_function ?? 'Welcome Lunch'}
+                  </div>
+                  <div className="text-[11px] text-[#737373]">
+                    <span className="font-semibold text-[#1A1A1A]">Dinner:</span> {plan.dinner_function ?? 'Welcome Dinner'}
+                  </div>
+                  <div className="text-[10px] uppercase font-bold text-[#A08040] pt-0.5">
+                    Food Pref: {plan.food_preference ?? 'Veg'}
+                  </div>
                 </div>
               ))}
             </div>
           </div>
         )}
 
-        {/* Functions */}
-        {assignedFunctions.length > 0 && (
-          <div className="py-3.5 border-b border-[#EEEAE4]">
-            <p className="text-[11px] font-semibold text-[#A08D62] uppercase tracking-[0.14em] mb-2">
-              Functions
-            </p>
-            <div className="flex flex-wrap gap-1.5">
-              {assignedFunctions.map((fn) => (
-                <span
-                  key={fn.function_id}
-                  className="px-2 py-0.5 rounded-full bg-[#F5EDD6] text-[11px] font-medium text-[#A08040]"
-                >
-                  {fn.function_name} · D{fn.day}
-                </span>
-              ))}
-            </div>
-          </div>
+        {data.decoration_package && (
+          <SummaryRow label="Decor Tier" value={`${data.decoration_package.toUpperCase()} Package`} />
         )}
 
-        <SummaryRow label="Decoration" value={data.decoration_theme_title} />
-        <SummaryRow label="Baraat"     value={data.baraat_style ? getBaraatLabel(data.baraat_style) : undefined} />
+        {data.selected_hotel && (
+          <SummaryRow label="Selected Venue" value={`${data.selected_hotel.name} (${data.selected_hotel.price_display})`} />
+        )}
       </div>
     </div>
   )
