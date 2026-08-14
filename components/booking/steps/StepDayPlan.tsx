@@ -86,7 +86,7 @@ export function StepDayPlan({
   const [dinnerMenuPackage, setDinnerMenuPackage] = useState<string>(plan.dinner.menu_item_names?.[0] ?? MENU_PACKAGES[1].name)
   
   // View Menu Popup State
-  const [popupConfig, setPopupConfig] = useState<{ type: 'lunch' | 'dinner'; pref: FoodPreference; pkg: string } | null>(null)
+  const [popupMenuType, setPopupMenuType] = useState<'lunch' | 'dinner' | null>(null)
   
   // Lunch Function & Dinner Function
   const [lunchFunction, setLunchFunction] = useState<string>(plan.lunch_function ?? 'Welcome Lunch')
@@ -111,7 +111,8 @@ export function StepDayPlan({
     { value: 'mixed',   label: 'Mixed',   icon: <Sparkles size={13} className="text-[#C5A85C]" /> },
   ]
 
-  const activePopupItems = popupConfig ? (MOCK_MENU[popupConfig.pref] || MOCK_MENU.veg) : MOCK_MENU.veg
+  const activePref = popupMenuType === 'lunch' ? lunchFoodPref : dinnerFoodPref
+  const activeMenu = MOCK_MENU[activePref] || MOCK_MENU.veg
 
   return (
     <motion.div
@@ -131,7 +132,7 @@ export function StepDayPlan({
 
       <h2 className="text-headline mb-1">Day {day} Planning</h2>
       <p className="text-body text-[#737373] mb-8">
-        Specify your room requirements, plus separate guest counts, food preferences, and event functions for Lunch and Dinner.
+        Specify your room requirements, plus separate guest counts, food preferences, event functions, and menu configurations for Lunch and Dinner.
       </p>
 
       <div className="space-y-6">
@@ -239,7 +240,7 @@ export function StepDayPlan({
                 type="button"
                 variant="gold"
                 size="md"
-                onClick={() => setPopupConfig({ type: 'lunch', pref: lunchFoodPref, pkg: lunchMenuPackage })}
+                onClick={() => setPopupMenuType('lunch')}
                 className="flex items-center gap-1.5 shrink-0 shadow-xs text-xs"
               >
                 <UtensilsCrossed size={13} /> View Lunch Menu
@@ -334,7 +335,7 @@ export function StepDayPlan({
                 type="button"
                 variant="gold"
                 size="md"
-                onClick={() => setPopupConfig({ type: 'dinner', pref: dinnerFoodPref, pkg: dinnerMenuPackage })}
+                onClick={() => setPopupMenuType('dinner')}
                 className="flex items-center gap-1.5 shrink-0 shadow-xs text-xs"
               >
                 <UtensilsCrossed size={13} /> View Dinner Menu
@@ -345,9 +346,9 @@ export function StepDayPlan({
 
       </div>
 
-      {/* ── Popup Menu Modal ── */}
+      {/* ── Popup Menu Modal with Embedded Function & Package Selectors ── */}
       <AnimatePresence>
-        {popupConfig !== null && (
+        {popupMenuType !== null && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
@@ -359,17 +360,77 @@ export function StepDayPlan({
               <div className="px-6 py-4 border-b border-[#F0EDE9] bg-[#FDFCFA] flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <UtensilsCrossed size={18} className="text-[#C5A85C]" />
-                  <h3 className="text-lg font-semibold text-[#1A1A1A]">
-                    {popupConfig.pkg} — <span className="capitalize text-[#C5A85C]">{popupConfig.type} ({popupConfig.pref})</span>
-                  </h3>
+                  <div>
+                    <h3 className="text-base font-bold text-[#1A1A1A] capitalize">
+                      {popupMenuType === 'lunch' ? 'Lunch' : 'Dinner'} Menu Interface
+                    </h3>
+                    <p className="text-xs text-[#737373]">
+                      Function: <strong className="text-[#1A1A1A]">{popupMenuType === 'lunch' ? lunchFunction : dinnerFunction}</strong>
+                    </p>
+                  </div>
                 </div>
                 <button
                   type="button"
-                  onClick={() => setPopupConfig(null)}
+                  onClick={() => setPopupMenuType(null)}
                   className="w-8 h-8 rounded-full flex items-center justify-center border border-[#E8E2D8] text-[#737373] hover:text-[#1A1A1A] hover:border-[#C5A85C] transition-colors"
                 >
                   <X size={16} />
                 </button>
+              </div>
+
+              {/* Modal Toolbar: Live Controls inside Menu Interface */}
+              <div className="px-6 py-3 bg-[#F5F0E8] border-b border-[#E8E2D8] flex flex-wrap items-center justify-between gap-3 text-xs">
+                {/* Function Selector inside Menu */}
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold text-[#737373]">Function:</span>
+                  {popupMenuType === 'lunch' ? (
+                    <select
+                      value={lunchFunction}
+                      onChange={e => setLunchFunction(e.target.value)}
+                      className="border border-[#E8E2D8] rounded-lg px-2.5 py-1 font-semibold text-[#1A1A1A] bg-white cursor-pointer"
+                    >
+                      {LUNCH_FUNCTIONS.map(fn => (
+                        <option key={fn} value={fn}>{fn}</option>
+                      ))}
+                    </select>
+                  ) : (
+                    <select
+                      value={dinnerFunction}
+                      onChange={e => setDinnerFunction(e.target.value)}
+                      className="border border-[#E8E2D8] rounded-lg px-2.5 py-1 font-semibold text-[#1A1A1A] bg-white cursor-pointer"
+                    >
+                      {DINNER_FUNCTIONS.map(fn => (
+                        <option key={fn} value={fn}>{fn}</option>
+                      ))}
+                    </select>
+                  )}
+                </div>
+
+                {/* Package Selector inside Menu */}
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold text-[#737373]">Package:</span>
+                  {popupMenuType === 'lunch' ? (
+                    <select
+                      value={lunchMenuPackage}
+                      onChange={e => setLunchMenuPackage(e.target.value)}
+                      className="border border-[#E8E2D8] rounded-lg px-2.5 py-1 font-semibold text-[#1A1A1A] bg-white cursor-pointer"
+                    >
+                      {MENU_PACKAGES.map(pkg => (
+                        <option key={pkg.id} value={pkg.name}>{pkg.name}</option>
+                      ))}
+                    </select>
+                  ) : (
+                    <select
+                      value={dinnerMenuPackage}
+                      onChange={e => setDinnerMenuPackage(e.target.value)}
+                      className="border border-[#E8E2D8] rounded-lg px-2.5 py-1 font-semibold text-[#1A1A1A] bg-white cursor-pointer"
+                    >
+                      {MENU_PACKAGES.map(pkg => (
+                        <option key={pkg.id} value={pkg.name}>{pkg.name}</option>
+                      ))}
+                    </select>
+                  )}
+                </div>
               </div>
 
               {/* Modal Body */}
@@ -384,7 +445,7 @@ export function StepDayPlan({
 
                 {/* Categories */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {activePopupItems.map(cat => (
+                  {activeMenu.map(cat => (
                     <div key={cat.category} className="rounded-2xl border border-[#E8E2D8] bg-[#FDFCFA] p-4 space-y-2">
                       <div className="flex items-center gap-2 text-sm font-bold text-[#1A1A1A] border-b border-[#F0EDE9] pb-2">
                         <span>{cat.emoji}</span>
@@ -405,7 +466,7 @@ export function StepDayPlan({
 
               {/* Modal Footer */}
               <div className="px-6 py-4 border-t border-[#F0EDE9] bg-[#FDFCFA] flex justify-end">
-                <Button size="md" variant="gold" onClick={() => setPopupConfig(null)}>
+                <Button size="md" variant="gold" onClick={() => setPopupMenuType(null)}>
                   Close &amp; Continue
                 </Button>
               </div>
