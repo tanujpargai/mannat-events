@@ -35,7 +35,7 @@ export interface WeddingFunction {
 // Day Planning Types
 // -------------------------------------------------------
 
-export type FoodPreference = 'veg' | 'non-veg' | 'mixed'
+export type FoodPreference = 'veg' | 'non-veg'
 
 export interface MealSelection {
   type: 'veg' | 'non-veg'

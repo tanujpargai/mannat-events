@@ -18,6 +18,8 @@ import {
 
 import { StepDates } from './steps/StepDates'
 import { StepDayPlan } from './steps/StepDayPlan'
+import { StepMenuPackage } from './steps/StepMenuPackage'
+import { StepDinnerFunction } from './steps/StepDinnerFunction'
 import { StepDecorationTheme } from './steps/StepDecorationTheme'
 import { StepHotelComparison } from './steps/StepHotelComparison'
 import { DynamicProgressBar } from './DynamicProgressBar'
@@ -30,6 +32,8 @@ import { Label } from '@/components/ui/Label'
 type StepKind =
   | { kind: 'dates' }
   | { kind: 'day-plan'; day: number }
+  | { kind: 'menu-package'; day: number }
+  | { kind: 'dinner-function'; day: number }
   | { kind: 'decoration' }
   | { kind: 'verify' }
   | { kind: 'hotel-comparison' }
@@ -38,6 +42,8 @@ function buildStepList(duration: number): StepKind[] {
   const steps: StepKind[] = [{ kind: 'dates' }]
   for (let day = 1; day <= duration; day++) {
     steps.push({ kind: 'day-plan', day })
+    steps.push({ kind: 'menu-package', day })
+    steps.push({ kind: 'dinner-function', day })
   }
   steps.push({ kind: 'decoration' })
   steps.push({ kind: 'verify' })
@@ -49,6 +55,8 @@ function stepLabel(step: StepKind): string {
   switch (step.kind) {
     case 'dates':            return 'Stay Dates'
     case 'day-plan':         return `Day ${step.day} Planning`
+    case 'menu-package':     return `Day ${step.day} Menu Package`
+    case 'dinner-function':  return `Day ${step.day} Functions`
     case 'decoration':       return 'Decoration Package'
     case 'verify':           return 'Mobile Verification'
     case 'hotel-comparison': return 'Hotel Comparison'
@@ -63,7 +71,7 @@ interface WizardState {
 
 type WizardAction =
   | { type: 'SET_DATES'; checkIn: string; checkOut: string }
-  | { type: 'SET_DAY_PLAN'; day: number; plan: DayPlan }
+  | { type: 'SET_DAY_PLAN'; day: number; plan: Partial<DayPlan> }
   | { type: 'SET_DECORATION'; tier: DecorationPackageTier; title: string }
   | { type: 'SET_PHONE'; phone: string }
   | { type: 'SET_HOTEL'; hotel: HotelComparisonItem }
@@ -103,7 +111,25 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
         ...state,
         data: {
           ...state.data,
-          day_plans: updateDayPlan(state.data.day_plans!, action.day, () => action.plan),
+          day_plans: updateDayPlan(state.data.day_plans!, action.day, (oldPlan) => {
+            const nextPlan = {
+              ...oldPlan,
+              ...action.plan,
+            }
+            if (action.plan.lunch) {
+              nextPlan.lunch = {
+                ...oldPlan.lunch,
+                ...action.plan.lunch,
+              }
+            }
+            if (action.plan.dinner) {
+              nextPlan.dinner = {
+                ...oldPlan.dinner,
+                ...action.plan.dinner,
+              }
+            }
+            return nextPlan
+          }),
         },
       }
 
@@ -502,6 +528,50 @@ export function BookingWizard() {
             nonVegMenuItems={[]}
             onNext={(newPlan) => {
               dispatch({ type: 'SET_DAY_PLAN', day: step.day, plan: newPlan })
+              next()
+            }}
+            onPrev={prev}
+          />
+        )
+      }
+
+      case 'menu-package': {
+        const plan = getDayPlan(step.day)!
+        return (
+          <StepMenuPackage
+            day={step.day}
+            plan={plan}
+            onNext={(menuData) => {
+              dispatch({
+                type: 'SET_DAY_PLAN',
+                day: step.day,
+                plan: {
+                  lunch: { type: plan.lunch.type, guest_count: plan.lunch.guest_count, menu_item_ids: [], menu_item_names: [menuData.lunchMenuPackage] },
+                  dinner: { type: plan.dinner.type, guest_count: plan.dinner.guest_count, menu_item_ids: [], menu_item_names: [menuData.dinnerMenuPackage] },
+                },
+              })
+              next()
+            }}
+            onPrev={prev}
+          />
+        )
+      }
+
+      case 'dinner-function': {
+        const plan = getDayPlan(step.day)!
+        return (
+          <StepDinnerFunction
+            day={step.day}
+            plan={plan}
+            onNext={(funcData) => {
+              dispatch({
+                type: 'SET_DAY_PLAN',
+                day: step.day,
+                plan: {
+                  lunch_function: funcData.lunchFunction,
+                  dinner_function: funcData.dinnerFunction,
+                },
+              })
               next()
             }}
             onPrev={prev}
